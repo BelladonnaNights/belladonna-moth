@@ -2,7 +2,7 @@
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Belladonna Moth — Playlists</title>
-<link rel="icon" href="moth.png">
+<link rel="icon" href="logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{--gold:#c9a84c;--gold2:#e8c96a;--gold3:#f5df90;--bg:#080808;--surface:#121110;--surface2:#1a1816;--text:#f0ede8;--text2:#b0a898;--text3:#6d655a;--border:rgba(255,255,255,.09);--border2:rgba(255,255,255,.18);--green:#2ecc71;--red:#e74c3c;--display:'Bebas Neue','Impact',sans-serif;--cinzel:'Cinzel',Georgia,serif;--font:'DM Sans',system-ui,sans-serif}
@@ -11,7 +11,7 @@ html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var
 body{background:radial-gradient(100% 50% at 50% 0,#171207 0,#080808 70%) no-repeat,#080808;min-height:100vh}
 button{font-family:inherit;cursor:pointer}
 header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-header img{height:40px;filter:drop-shadow(0 0 8px rgba(232,201,106,.35))}
+header img{height:48px;width:auto;filter:drop-shadow(0 0 8px rgba(232,201,106,.35))}
 .logo{font-family:var(--display);font-size:32px;letter-spacing:.06em;line-height:1;background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo small{display:block;font-family:var(--cinzel);font-size:9px;letter-spacing:.35em;-webkit-text-fill-color:var(--text3);color:var(--text3)}
 .sp{flex:1}.who{font-size:13px;color:var(--text2)}
@@ -50,7 +50,7 @@ label.l{display:block;font-family:var(--cinzel);font-size:10px;letter-spacing:.1
 </style></head><body>
 
 <div id="gate">
-  <img src="moth.png" alt="" style="height:90px;filter:drop-shadow(0 0 14px rgba(232,201,106,.45))">
+  <img src="logo.png" onerror="this.onerror=null;this.src='moth.png'" alt="" style="height:110px;filter:drop-shadow(0 0 14px rgba(232,201,106,.45))">
   <h1>Playlists</h1>
   <p>Belladonna Moth admin — sign in with your Belladonna admin account.</p>
   <input type="email" id="em" placeholder="Email" autocomplete="username">
@@ -61,7 +61,7 @@ label.l{display:block;font-family:var(--cinzel);font-size:10px;letter-spacing:.1
 
 <div id="app" style="display:none">
 <header>
-  <img src="moth.png" alt=""><div class="logo">BELLADONNA MOTH<small>PLAYLIST ADMIN</small></div>
+  <img src="logo.png" onerror="this.onerror=null;this.src='moth.png'" alt=""><div class="logo">BELLADONNA MOTH<small>PLAYLIST ADMIN</small></div>
   <div class="sp"></div><span class="who" id="who"></span><button class="btn sm" id="out">Sign out</button>
 </header>
 <main>
