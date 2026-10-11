@@ -116,7 +116,7 @@ function render(){
   else if (r.state === 'buzzed' && cur && cur.id === pid) { b.classList.add('you'); text = 'YOU!'; m = "<b>You're up!</b> Say your answer out loud"; }
   else if (r.state === 'buzzed' && cur) { b.classList.add('off'); text = '…'; m = '<b style="color:' + esc(cur.color) + '">' + esc(cur.name) + '</b> buzzed first'; }
   else if (r.state === 'revealed') { b.classList.add('off'); text = '✓'; m = r.reveal ? ('<b>' + esc(r.reveal.title) + '</b><br>' + esc(r.reveal.artist)) : 'Next song coming up'; }
-  else if (r.state === 'timeup') { b.classList.add('off'); text = 'TIME'; m = "Time's up on this clip"; }
+  else if (r.state === 'timeup') { b.classList.add('off'); if (r.stage < r.stages - 1) { text = 'WAIT'; m = 'Any guesses? Next clue coming…'; } else { text = 'TIME'; m = "Time's up!"; } }
   else { b.classList.add('off'); m = r.state === 'cued' ? 'Get ready…' : 'Waiting for the host'; }
   b.textContent = text; msg.innerHTML = m; $('#moth').classList.toggle('landed', b.classList.contains('you'));
   // little celebrations
