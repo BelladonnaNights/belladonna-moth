@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Belladonna Moth — Playlists</title>
+<link rel="icon" href="moth.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#c9a84c;--gold2:#e8c96a;--gold3:#f5df90;--bg:#080808;--surface:#121110;--surface2:#1a1816;--text:#f0ede8;--text2:#b0a898;--text3:#6d655a;--border:rgba(255,255,255,.09);--border2:rgba(255,255,255,.18);--green:#2ecc71;--red:#e74c3c;--display:'Bebas Neue','Impact',sans-serif;--cinzel:'Cinzel',Georgia,serif;--font:'DM Sans',system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font)}
+body{background:radial-gradient(100% 50% at 50% 0,#171207 0,#080808 70%) no-repeat,#080808;min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+header{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+header img{height:40px;filter:drop-shadow(0 0 8px rgba(232,201,106,.35))}
+.logo{font-family:var(--display);font-size:32px;letter-spacing:.06em;line-height:1;background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo small{display:block;font-family:var(--cinzel);font-size:9px;letter-spacing:.35em;-webkit-text-fill-color:var(--text3);color:var(--text3)}
+.sp{flex:1}.who{font-size:13px;color:var(--text2)}
+.btn{border:1px solid var(--border2);background:var(--surface2);color:var(--text);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;transition:.15s}
+.btn:hover{border-color:var(--gold);color:var(--gold2)}.btn:disabled{opacity:.35;pointer-events:none}
+.btn.gold{background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);color:#150f02;border:none}.btn.gold:hover{filter:brightness(1.08);color:#150f02}
+.btn.danger:hover{border-color:var(--red);color:var(--red)}.btn.sm{padding:4px 10px;font-size:12px}
+input[type=text],input[type=email],input[type=password],textarea{width:100%;background:#000;border:1px solid var(--border2);border-radius:9px;color:var(--text);padding:9px 11px;font:inherit;font-size:14px}
+input:focus,textarea:focus{border-color:var(--gold);outline:none}
+textarea{resize:vertical;min-height:110px;line-height:1.5}
+#gate{max-width:380px;margin:12vh auto;padding:0 20px;text-align:center}
+#gate h1{font-family:var(--display);font-size:54px;letter-spacing:.05em;color:var(--gold2);line-height:1}
+#gate p{color:var(--text2);margin:8px 0 22px;font-size:14px}#gate input{margin-bottom:10px;text-align:center}
+.err{color:var(--gold2);font-size:13px;min-height:20px;margin-top:8px}
+main{display:grid;grid-template-columns:290px 1fr;gap:16px;padding:18px 22px;max-width:1200px;margin:0 auto}
+@media(max-width:760px){main{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.ph{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-family:var(--cinzel);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+.pb{padding:12px}
+.pl{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--surface2);cursor:pointer}
+.pl:hover{border-color:var(--border2)}.pl.on{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,168,76,.3)}
+.pl .n{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pl .c{color:var(--text3);font-size:12px}
+.empty{color:var(--text3);font-size:13px;text-align:center;padding:26px 10px;line-height:1.5}
+label.l{display:block;font-family:var(--cinzel);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin:14px 0 6px}
+.row{display:grid;grid-template-columns:34px 1fr 1fr auto;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.row .no{font-family:var(--display);font-size:18px;color:var(--text3);text-align:right}
+.row input{padding:6px 9px;font-size:13.5px}
+.ib{width:26px;height:26px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--text2);display:inline-grid;place-items:center;padding:0}
+.ib:hover{border-color:var(--gold);color:var(--gold2)}.ib.rm:hover{border-color:var(--red);color:var(--red)}
+.cols{display:grid;grid-template-columns:34px 1fr 1fr auto;gap:8px;font-family:var(--cinzel);font-size:10px;letter-spacing:.16em;color:var(--text3);text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--border2)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.hint{font-size:12.5px;color:var(--text3);line-height:1.5}
+.qa{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#000;border:1px solid var(--gold);color:var(--gold2);padding:9px 16px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:30}#toast.show{opacity:1}
+.dirty{color:var(--gold2);font-size:12px}
+</style></head><body>
+
+<div id="gate">
+  <img src="moth.png" alt="" style="height:90px;filter:drop-shadow(0 0 14px rgba(232,201,106,.45))">
+  <h1>Playlists</h1>
+  <p>Belladonna Moth admin — sign in with your Belladonna admin account.</p>
+  <input type="email" id="em" placeholder="Email" autocomplete="username">
+  <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+  <button class="btn gold" id="go" style="width:100%;padding:11px;font-size:15px">Sign in</button>
+  <div class="err" id="gerr"></div>
+</div>
+
+<div id="app" style="display:none">
+<header>
+  <img src="moth.png" alt=""><div class="logo">BELLADONNA MOTH<small>PLAYLIST ADMIN</small></div>
+  <div class="sp"></div><span class="who" id="who"></span><button class="btn sm" id="out">Sign out</button>
+</header>
+<main>
+  <section class="panel"><div class="ph"><span>Playlists</span><span class="sp"></span><button class="btn sm gold" id="newPl">+ New</button></div>
+    <div class="pb" id="list"></div></section>
+  <section class="panel"><div class="ph"><span id="edTitle">Playlist</span><span class="sp"></span><span class="dirty" id="dirty"></span></div>
+    <div class="pb" id="ed"></div></section>
+</main>
+</div>
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue, set, remove, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+const app = initializeApp({ apiKey:"AIzaSyCIfAE1JGHsUGzzVH2pz1Vyj5b5OhA0tDQ", authDomain:"belladonna-hq.firebaseapp.com", databaseURL:"https://belladonna-hq-default-rtdb.firebaseio.com", projectId:"belladonna-hq", storageBucket:"belladonna-hq.firebasestorage.app", messagingSenderId:"1021873183587", appId:"1:1021873183587:web:def283bb7b5ca48e4f9156" });
+const auth = getAuth(app), db = getDatabase(app);
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+function toast(t){ const e=$('#toast'); e.textContent=t; e.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>e.classList.remove('show'),2800); }
+
+/* ── sign in ── */
+$('#go').onclick = async () => { $('#gerr').textContent=''; try { await signInWithEmailAndPassword(auth, $('#em').value.trim(), $('#pw').value); } catch(e){ $('#gerr').textContent = /invalid|wrong|user-not-found|credential/i.test(e.code+e.message) ? 'That email or password is not right.' : (e.message||'Could not sign in'); } };
+$('#pw').addEventListener('keydown', e => { if (e.key==='Enter') $('#go').click(); });
+$('#out').onclick = () => signOut(auth);
+onAuthStateChanged(auth, u => { const ok = !!u && !u.isAnonymous; $('#gate').style.display = ok ? 'none' : 'block'; $('#app').style.display = ok ? 'block' : 'none'; if (ok) { $('#who').textContent = u.email || ''; start(); } });
+
+/* ── data ── */
+let PL = {}, cur = null, draft = null, dirty = false, started = false;
+function start(){ if (started) return; started = true; onValue(ref(db,'moth/playlists'), s => { PL = s.val() || {}; renderList(); if (cur && !dirty) { if (PL[cur]) load(cur, true); else { cur = null; draft = null; renderEd(); } } }); renderEd(); }
+const songsOf = p => (Array.isArray(p.songs) ? p.songs : Object.values(p.songs || {})).map(s => ({ title: s.title || '', artist: s.artist || '' }));
+function renderList(){
+  const ids = Object.keys(PL).sort((a,b)=>String(PL[a].name).localeCompare(String(PL[b].name)));
+  $('#list').innerHTML = ids.length ? ids.map(id=>'<div class="pl'+(id===cur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(PL[id].name||'Untitled')+'</span><span class="c">'+(songsOf(PL[id]).length)+' songs</span></div>').join('') : '<div class="empty">No playlists yet.<br>Press <b>+ New</b> to make the first one.</div>';
+}
+$('#list').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r) return; if (dirty && !confirm('You have unsaved changes to this playlist. Switch anyway?')) return; load(r.dataset.id); });
+$('#newPl').onclick = () => { if (dirty && !confirm('You have unsaved changes to this playlist. Start a new one anyway?')) return; cur = push(ref(db,'moth/playlists')).key; draft = { name:'', songs:[] }; dirty = true; renderList(); renderEd(); setTimeout(()=>$('#nm')&&$('#nm').focus(),30); };
+function load(id, quiet){ cur = id; draft = { name: PL[id].name || '', songs: songsOf(PL[id]) }; dirty = false; renderList(); renderEd(); }
+function mark(){ dirty = true; $('#dirty').textContent = 'Unsaved changes'; }
+
+/* ── editor ── */
+function parseLines(txt){
+  return txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    if (l.includes('\t')) { const [a,...b]=l.split('\t'); return { title:a.trim(), artist:b.join(' ').trim() }; }
+    const m = l.match(/^(.*\S)\s+[-–—]\s+(\S.*)$/s); // split on the LAST " - " so titles with hyphens survive
+    if (m) { const i = Math.max(l.lastIndexOf(' - '), l.lastIndexOf(' – '), l.lastIndexOf(' — ')); return { title:l.slice(0,i).trim(), artist:l.slice(i+3).trim() }; }
+    return { title:l, artist:'' };
+  });
+}
+const IC = { up:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6M6 12l6-6 6 6"/></svg>', dn:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13M6 12l6 6 6-6"/></svg>', x:'<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' };
+function renderEd(){
+  const box = $('#ed');
+  if (!draft) { $('#edTitle').textContent='Playlist'; $('#dirty').textContent=''; box.innerHTML='<div class="empty">Pick a playlist on the left, or press <b>+ New</b>.</div>'; return; }
+  $('#edTitle').textContent = draft.name || 'New playlist'; $('#dirty').textContent = dirty ? 'Unsaved changes' : '';
+  box.innerHTML =
+   '<label class="l" style="margin-top:0">Playlist name</label><input type="text" id="nm" maxlength="60" placeholder="e.g. 80s Throwbacks" value="'+esc(draft.name)+'">'
+  +'<label class="l">Add songs — one per line, as <b style="color:var(--gold2)">Song - Artist</b></label>'
+  +'<textarea id="bulk" placeholder="Bohemian Rhapsody - Queen&#10;Waterloo - ABBA&#10;Don\'t Stop Believin\' - Journey"></textarea>'
+  +'<div class="bar"><button class="btn gold" id="addBulk">Add these songs</button><span class="hint">Tip: you can paste two columns straight from a spreadsheet.</span></div>'
+  +'<label class="l">Or add one</label><div class="qa"><input type="text" id="qt" placeholder="Song"><input type="text" id="qa" placeholder="Artist"><button class="btn" id="qadd">Add</button></div>'
+  +'<label class="l">Songs in this playlist ('+draft.songs.length+')</label>'
+  +(draft.songs.length ? '<div class="cols"><span></span><span>Song</span><span>Artist</span><span style="width:84px"></span></div>'+draft.songs.map((s,i)=>'<div class="row" data-i="'+i+'"><span class="no">'+String(i+1).padStart(2,'0')+'</span><input type="text" data-f="title" value="'+esc(s.title)+'" placeholder="Song"><input type="text" data-f="artist" value="'+esc(s.artist)+'" placeholder="Artist"><span style="display:flex;gap:4px"><button class="ib" data-a="up" title="Move up">'+IC.up+'</button><button class="ib" data-a="dn" title="Move down">'+IC.dn+'</button><button class="ib rm" data-a="rm" title="Remove">'+IC.x+'</button></span></div>').join('') : '<div class="empty">No songs yet — paste a list above.</div>')
+  +'<div class="bar" style="margin-top:18px"><button class="btn gold" id="save">Save playlist</button><button class="btn" id="sort">Sort A–Z</button><button class="btn" id="dedupe">Remove duplicates</button><span class="sp"></span><button class="btn danger" id="del">Delete playlist</button></div>'
+  +'<div class="err" id="serr"></div><p class="hint" style="margin-top:6px">Hosts see saved playlists in their Belladonna Moth app (press the ↻ button there if one doesn\'t show up yet). The app finds each song in the host\'s own music folder by matching the song and artist names to the file names.</p>';
+}
+const ed = $('#ed');
+ed.addEventListener('input', e => { if (!draft) return; if (e.target.id==='nm') { draft.name = e.target.value; $('#edTitle').textContent = draft.name || 'New playlist'; mark(); } const f=e.target.dataset.f; if (f) { draft.songs[+e.target.closest('.row').dataset.i][f] = e.target.value; mark(); } });
+ed.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !draft) return; const row = b.closest('.row'), i = row ? +row.dataset.i : -1;
+  if (b.dataset.a==='up' && i>0) { [draft.songs[i-1],draft.songs[i]]=[draft.songs[i],draft.songs[i-1]]; mark(); renderEd(); }
+  if (b.dataset.a==='dn' && i<draft.songs.length-1) { [draft.songs[i+1],draft.songs[i]]=[draft.songs[i],draft.songs[i+1]]; mark(); renderEd(); }
+  if (b.dataset.a==='rm') { draft.songs.splice(i,1); mark(); renderEd(); }
+  if (b.id==='addBulk') { const add = parseLines($('#bulk').value); if (!add.length) { toast('Type or paste some songs first'); return; } draft.songs.push(...add); mark(); renderEd(); toast(add.length+' song'+(add.length>1?'s':'')+' added'); }
+  if (b.id==='qadd') { const t=$('#qt').value.trim(), a=$('#qa').value.trim(); if (!t) return; draft.songs.push({title:t,artist:a}); mark(); renderEd(); setTimeout(()=>$('#qt')&&$('#qt').focus(),20); }
+  if (b.id==='sort') { draft.songs.sort((x,y)=>x.title.localeCompare(y.title)); mark(); renderEd(); }
+  if (b.id==='dedupe') { const seen=new Set(); const n=draft.songs.length; draft.songs=draft.songs.filter(s=>{const k=(s.title+'|'+s.artist).toLowerCase().trim(); if(seen.has(k)) return false; seen.add(k); return true;}); mark(); renderEd(); toast((n-draft.songs.length)+' duplicate'+(n-draft.songs.length===1?'':'s')+' removed'); }
+  if (b.id==='save') {
+    const name = (draft.name||'').trim(); if (!name) { $('#serr').textContent='Give the playlist a name first.'; return; }
+    const songs = draft.songs.map(s=>({title:(s.title||'').trim(),artist:(s.artist||'').trim()})).filter(s=>s.title);
+    if (!songs.length) { $('#serr').textContent='Add at least one song.'; return; }
+    try { await set(ref(db,'moth/playlists/'+cur), { name, songs, count: songs.length, updatedAt: serverTimestamp() }); dirty=false; draft.name=name; draft.songs=songs; renderEd(); toast('Saved “'+name+'”'); }
+    catch(err) { $('#serr').textContent = /permission/i.test(err.message) ? 'Firebase said no — this account is not allowed to save playlists. Check the moth/playlists rules and that your login is in the admins list.' : (err.message||'Could not save'); }
+  }
+  if (b.id==='del') { if (!confirm('Delete “'+(draft.name||'this playlist')+'” for everyone?')) return;
+    try { if (PL[cur]) await remove(ref(db,'moth/playlists/'+cur)); cur=null; draft=null; dirty=false; renderList(); renderEd(); toast('Playlist deleted'); } catch(err) { $('#serr').textContent = err.message; } }
+});
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue=''; } });
+</script></body></html>
