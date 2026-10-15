@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><link rel="icon" href="/icon.png"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Belladonna Moth</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/theme.css">
+<style>
+html,body{overflow:hidden;overscroll-behavior:none;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+body{display:flex;flex-direction:column;background:radial-gradient(120% 80% at 50% 0,#1c1608 0,#080808 60%)}
+header{padding:calc(12px + env(safe-area-inset-top)) 16px 8px;text-align:center}
+.brand{font-family:var(--cinzel);letter-spacing:.3em;font-size:11px;color:var(--gold);text-transform:uppercase}
+.me{display:flex;justify-content:space-between;align-items:center;padding:6px 18px;font-size:15px;color:var(--text2)}
+.me b{color:var(--text);font-weight:700}.score{font-family:var(--display);font-size:30px;color:var(--gold2);letter-spacing:.04em}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 20px calc(20px + env(safe-area-inset-bottom));min-height:0}
+#join{width:100%;max-width:360px;text-align:center}
+#join h1{font-family:var(--display);font-size:54px;letter-spacing:.05em;color:var(--gold2);line-height:1}
+#join p{color:var(--text2);margin:8px 0 22px}
+#join input{width:100%;font-size:22px;padding:14px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);color:var(--text);text-align:center;outline:none;font-family:inherit}
+#join input:focus{border-color:var(--gold)}
+.go{margin-top:14px;width:100%;font-family:var(--display);font-size:30px;letter-spacing:.08em;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);color:#120e02}
+#game{display:none;width:100%;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:0}
+#buzz{width:min(78vw,52vh);height:min(78vw,52vh);border-radius:50%;border:none;font-family:var(--display);font-size:clamp(48px,16vw,92px);letter-spacing:.06em;color:#fff;
+ background:radial-gradient(circle at 40% 32%,#fff6cf 0,#f5c542 30%,#c28a14 70%,#7a5207 100%);color:#2a1d00;box-shadow:0 0 0 8px rgba(245,197,66,.16),0 0 60px rgba(245,197,66,.55),inset 0 -10px 24px rgba(0,0,0,.3);transition:transform .05s,filter .2s,box-shadow .2s}
+#buzz:active{transform:scale(.95)}
+#buzz.off{background:radial-gradient(circle at 35% 30%,#3c3a37 0,#26241f 60%,#171614 100%);color:#6d655a;box-shadow:inset 0 -10px 24px rgba(0,0,0,.4);pointer-events:none}
+#buzz.armed{animation:pulse 1.1s ease-in-out infinite}
+#buzz.you{background:radial-gradient(circle at 40% 32%,#ffffff 0,#fff3b0 30%,#f5c542 70%,#b8860b 100%);color:#2a1d00;box-shadow:0 0 0 14px rgba(255,236,160,.3),0 0 140px rgba(255,226,130,1);pointer-events:none}
+#buzz.out{background:radial-gradient(circle at 35% 30%,#4a2323 0,#2b1414 70%);color:#a05555;pointer-events:none;box-shadow:none}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 8px rgba(245,197,66,.16),0 0 50px rgba(245,197,66,.45),inset 0 -10px 24px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 20px rgba(245,197,66,.06),0 0 95px rgba(255,214,102,.85),inset 0 -10px 24px rgba(0,0,0,.3)}}
+#wrap{position:relative;display:flex;align-items:center;justify-content:center}
+#moth{position:absolute;top:-6%;left:50%;width:52%;margin-left:-26%;z-index:2;pointer-events:none;opacity:.9;filter:drop-shadow(0 0 10px rgba(0,0,0,.6));transition:top .35s,transform .35s;animation:flutter 1.6s ease-in-out infinite}
+#moth.landed{top:-12%;animation:none;transform:scale(.78)}
+@keyframes flutter{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(4deg)}}
+#msg{font-family:var(--cinzel);letter-spacing:.14em;text-transform:uppercase;font-size:14px;color:var(--text2);text-align:center;min-height:36px;line-height:1.4}
+#msg b{color:var(--gold2)}
+#alt{display:none;width:100%;max-width:420px;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:0 4px;overflow:auto;max-height:100%}
+#alt .t{font-family:var(--display);font-size:46px;letter-spacing:.05em;color:var(--gold2);line-height:1}#alt .s{color:var(--text2);font-size:15px;line-height:1.4}#alt img{width:34vw;max-width:150px;filter:drop-shadow(0 0 14px rgba(232,201,106,.5));animation:flutter 1.6s ease-in-out infinite}
+#alt .q{font-family:var(--display);font-size:34px;color:var(--text);letter-spacing:.03em;line-height:1.05}
+.abig{width:min(70vw,44vh);height:min(70vw,44vh);border-radius:50%;border:none;font-family:var(--display);font-size:clamp(40px,13vw,70px);letter-spacing:.06em;background:radial-gradient(circle at 40% 32%,#fff6cf 0,#f5c542 30%,#c28a14 70%,#7a5207 100%);color:#2a1d00;animation:pulse 1.1s ease-in-out infinite;touch-action:manipulation}
+.abig:active{transform:scale(.95)}
+.opt{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px;font-size:20px;font-weight:700;border-radius:14px;border:2px solid var(--border2);background:var(--surface2);color:var(--text);text-align:left;touch-action:manipulation}
+.opt.mine{border-color:var(--gold2);background:rgba(201,168,76,.18);color:var(--gold3)}.opt.lead{border-color:var(--green)}.opt:disabled{opacity:.9}
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .5s}
+#conn{position:fixed;left:0;right:0;top:0;background:#7a1e1e;color:#fff;text-align:center;padding:6px;font-size:13px;display:none;z-index:9}
+</style></head><body>
+<div id="conn">Reconnecting…</div><div id="flash"></div>
+<header><div class="brand" id="gname">Belladonna Moth</div></header>
+<div class="me" id="me" style="display:none"><span id="myname"></span><span class="score" id="myscore">0</span></div>
+<main>
+ <div id="join"><h1>Join the game</h1><p>Pick a name or team name</p>
+  <input id="nm" maxlength="18" placeholder="Your name" autocomplete="off" autocapitalize="words"><button class="go" id="goBtn">Let's play</button></div>
+ <div id="game"><div id="alt"></div><div id="wrap"><button id="buzz" class="off">BUZZ</button><img id="moth" src="/moth.png" alt="">
+
+</div><div id="msg"></div></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+let ws, me=null, st=null, tries=0, joined=false, lastBuzzSent=0;
+const TOKEN_KEY='ntb-token', NAME_KEY='ntb-name';
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+$('#nm').value=ls.get(NAME_KEY)||'';
+function connect(){
+  ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws?role=player');
+  ws.onopen=()=>{ tries=0; $('#conn').style.display='none'; const tok=ls.get(TOKEN_KEY); if(tok) ws.send(JSON.stringify({t:'join',token:tok,rejoin:true})); };
+  ws.onmessage=e=>{ const m=JSON.parse(e.data);
+    if(m.t==='joined'){ ls.set(TOKEN_KEY,m.token); joined=true; $('#join').style.display='none'; $('#game').style.display='flex'; $('#me').style.display='flex'; }
+    else if(m.t==='state'){ st=m; if(m.name) $('#gname').textContent=m.name; render(); }
+    else if(m.t==='gone'){ ls.set(TOKEN_KEY,''); joined=false; st=null; $('#join').style.display='';$('#game').style.display='none';$('#me').style.display='none'; }
+    else if(m.t==='event'){ onEvent(m); } };
+  ws.onclose=()=>{ $('#conn').style.display='block'; setTimeout(connect,Math.min(3000,500+tries++*500)); };
+}
+function join(){ const n=$('#nm').value.trim(); if(!n) { $('#nm').focus(); return; } ls.set(NAME_KEY,n); ls.set(TOKEN_KEY,''); ws.send(JSON.stringify({t:'join',name:n})); }
+$('#goBtn').onclick=join; $('#nm').addEventListener('keydown',e=>{ if(e.key==='Enter') join(); });
+function render(){
+  if(!st||!st.you) return;
+  { const md=st.mode||'hub'; if(md!=='tune'){ altShow(true); $('#myname').innerHTML='<b>'+esc(st.you.name)+'</b>'; $('#myscore').textContent=st.you.score; altRender(md,!!st.you.entered,st.you.vote); return; } altShow(false); }
+  const y=st.you, r=st.round, b=$('#buzz'), msg=$('#msg');
+  $('#myname').innerHTML='<b>'+esc(y.name)+'</b>'; $('#myscore').textContent=y.score;
+  b.className=''; let text='BUZZ', m='';
+  const cur=r.current;
+  if(r.state==='playing' && !y.locked){ b.classList.add('armed'); m='Listen… tap when you know it!'; }
+  else if(r.state==='playing' && y.locked){ b.classList.add('out'); text='OUT'; m='You\'re locked out this song'; }
+  else if(r.state==='buzzed' && cur && cur.id===y.id){ b.classList.add('you'); text='YOU!'; m='<b>You\'re up!</b> Say your answer out loud'; }
+  else if(r.state==='buzzed' && cur){ b.classList.add('off'); text='…'; m='<b style="color:'+cur.color+'">'+esc(cur.name)+'</b> buzzed first'; }
+  else if(r.state==='revealed'){ b.classList.add('off'); text='✓'; m=r.reveal?('<b>'+esc(r.reveal.title)+'</b><br>'+esc(r.reveal.artist)):'Next song coming up'; }
+  else if(r.state==='timeup'){ b.classList.add('off'); if(r.stage<r.stages-1){ text='WAIT'; m='Any guesses? Next clue coming…'; } else { text='TIME'; m='Time\'s up!'; } }
+  else { b.classList.add('off'); m=r.state==='cued'?'Get ready…':'Waiting for the host'; }
+  b.textContent=text; msg.innerHTML=m; $('#moth').classList.toggle('landed',b.classList.contains('you'));
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function buzz(e){ if(e) e.preventDefault(); const b=$('#buzz'); if(!b.classList.contains('armed')) return;
+  const now=Date.now(); if(now-lastBuzzSent<250) return; lastBuzzSent=now;
+  ws.send(JSON.stringify({t:'buzz'})); if(navigator.vibrate) navigator.vibrate(60);
+  b.className='you'; b.textContent='…'; $('#moth').classList.add('landed'); }     // optimistic; the server's answer decides who really won
+$('#buzz').addEventListener('pointerdown',buzz);
+function flash(c){ const f=$('#flash'); f.style.background=c; f.style.opacity=.55; setTimeout(()=>f.style.opacity=0,350); }
+function onEvent(m){
+  if(!st||!st.you) return;
+  if(m.name==='buzz'&&m.pid===st.you.id){ flash('#f5c542'); if(navigator.vibrate) navigator.vibrate([80,40,80]); }
+  if(m.name==='correct'&&m.pid===st.you.id){ flash('#2ecc71'); if(navigator.vibrate) navigator.vibrate([60,40,60,40,200]); }
+  if((m.name==='wrong')&&m.pid===st.you.id){ flash('#e74c3c'); if(navigator.vibrate) navigator.vibrate(400); }
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&ws&&ws.readyState>1) connect(); });
+try{ if('wakeLock' in navigator) document.addEventListener('pointerdown',()=>navigator.wakeLock.request('screen').catch(()=>{}),{once:true}); }catch(e){}
+
+function altRender(md,entered,myVote){
+  const A=document.getElementById('alt'); let h='';
+  const r=st.raffle||{state:'idle'}, v=st.vote||{state:'idle',options:[]}, M='<img src="/moth.png" alt="" id="altm">';
+  if(md==='raffle'){
+    if(r.state==='open') h=entered?M+'<div class="t">You\'re in!</div><div class="s">'+(r.prize?'Prize: <b>'+esc(r.prize)+'</b><br>':'')+r.count+' '+(r.count===1?'entry':'entries')+' so far. Good luck!</div>'
+      :(r.prize?'<div class="s">Prize: <b style="color:var(--gold2)">'+esc(r.prize)+'</b></div>':'')+'<button class="abig" data-act="enter">ENTER</button><div class="s">Tap to enter the free drawing</div>';
+    else if(r.state==='drawing') h=M+'<div class="t">The moth is choosing…</div><div class="s">Watch the big screen!</div>';
+    else if(r.state==='done'){ const w=r.winner, me=w&&w.id===MYID(); h=me?M+'<div class="t">YOU WON! 🎉</div><div class="s">'+(r.prize?'<b>'+esc(r.prize)+'</b><br>':'')+'Find the host to claim it.</div>':M+'<div class="t">'+esc(w?w.name:'')+'</div><div class="s">won this draw'+(entered?'. Maybe next time!':'.')+'</div>'; }
+    else h=M+'<div class="t">Raffle coming up</div><div class="s">Hang tight — you\'ll get a button to enter.</div>';
+  } else if(md==='vote'){
+    if(v.state==='open'||v.state==='closed'){
+      const open=v.state==='open';
+      h=(v.question?'<div class="q">'+esc(v.question)+'</div>':'<div class="q">Cast your vote</div>')+v.options.map((o,i)=>'<button class="opt'+(myVote===i?' mine':'')+(!open&&v.leaders&&v.leaders.includes(i)?' lead':'')+'" data-act="vote" data-i="'+i+'"'+(open?'':' disabled')+'><span>'+esc(o.label)+'</span>'+(open?(myVote===i?'<span>✓</span>':''):'<span>'+o.count+'</span>')+'</button>').join('')
+        +'<div class="s">'+(open?(myVote==null?'Tap your choice':'Vote counted — tap another to change it'):(v.tie?'Voting closed — it\'s a tie!':v.leaders&&v.leaders.length?'Voting closed — <b>'+esc(v.options[v.leaders[0]].label)+'</b> wins':'Voting closed'))+'</div>';
+    } else h=M+'<div class="t">Vote coming up</div><div class="s">Get ready to pick.</div>';
+  } else h=M+'<div class="t">Waiting</div><div class="s">for the host to pick a game</div>';
+  if(A.dataset.h!==h){ A.dataset.h=h; A.innerHTML=h; }
+}
+document.getElementById('alt').addEventListener('click',e=>{ const b=e.target.closest('button[data-act]'); if(!b) return;
+  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i));
+  try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} });
+function altShow(on){ document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
+const MYID=()=>st&&st.you&&st.you.id;
+function sendEnter(){ if(ws&&ws.readyState===1) ws.send(JSON.stringify({t:'enter'})); }
+function sendVote(i){ if(ws&&ws.readyState===1) ws.send(JSON.stringify({t:'vote',idx:i})); }
+connect();
+</script></body></html>
