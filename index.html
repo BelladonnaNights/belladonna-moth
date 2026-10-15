@@ -39,7 +39,8 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 @keyframes flutter{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(4deg)}}
 #msg{font-family:var(--cinzel);letter-spacing:.14em;text-transform:uppercase;font-size:14px;color:var(--text2);text-align:center;min-height:36px;line-height:1.4}
 #msg b{color:var(--gold2)}
-#alt{display:none;width:100%;max-width:420px;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:0 4px;overflow:auto;max-height:100%}
+#alt{display:none;width:100%;max-width:420px;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:28px 4px 12px;overflow-y:auto;overflow-x:hidden;max-height:100%}
+#alt>*{flex:none}
 #alt .t{font-family:var(--display);font-size:46px;letter-spacing:.05em;color:var(--gold2);line-height:1}#alt .s{color:var(--text2);font-size:15px;line-height:1.4}#alt img{width:34vw;max-width:150px;filter:drop-shadow(0 0 14px rgba(232,201,106,.5));animation:flutter 1.6s ease-in-out infinite}
 #alt .q{font-family:var(--display);font-size:34px;color:var(--text);letter-spacing:.03em;line-height:1.05}
 .abig{width:min(70vw,44vh);height:min(70vw,44vh);border-radius:50%;border:none;font-family:var(--display);font-size:clamp(40px,13vw,70px);letter-spacing:.06em;background:radial-gradient(circle at 40% 32%,#fff6cf 0,#f5c542 30%,#c28a14 70%,#7a5207 100%);color:#2a1d00;animation:pulse 1.1s ease-in-out infinite;touch-action:manipulation}
@@ -142,14 +143,52 @@ function buzz(e){
   b.className = 'you'; b.textContent = '…'; $('#moth').classList.add('landed');     // optimistic; the host decides who really won
 }
 
+
+/* ───── the moths on your phone: fly across during a raffle draw, and land on you if you won ───── */
+const fxImg=new Image(); fxImg.src=(document.querySelector('#join img')||{}).src||'/moth.png';
+let fx=null;
+function fxStop(){ if(fx){ cancelAnimationFrame(fx.raf); removeEventListener('resize',fx.rs); fx.cv.remove(); fx=null; } }
+function fxSync(){
+  const r=st&&st.raffle;
+  if(!st||(st.mode||'hub')!=='raffle'||!r||r.state!=='drawing'){ fxStop(); return; }
+  const key=r.id+'|'+r.draw, T=r.drawMs||13000;
+  if(fx&&fx.key===key){ fx.win=r.win; return; }
+  fxStop();
+  const cv=document.createElement('canvas'); cv.style.cssText='position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:6'; document.body.appendChild(cv);
+  const ctx=cv.getContext('2d'), dpr=Math.min(2,window.devicePixelRatio||1), tour=r.tour||{};
+  const a=fx={key,cv,win:r.win,parts:[],phase:0,last:performance.now(),start:performance.now()-(r.elapsed||0),T};
+  const size=()=>{ cv.width=innerWidth*dpr; cv.height=innerHeight*dpr; }; size(); a.rs=size; addEventListener('resize',size);
+  const ease=u=>u<0?0:u>1?1:u*u*(3-2*u);
+  function moth(x,y,w,ph,landed){ if(!(fxImg.complete&&fxImg.naturalWidth)) return; const iw=fxImg.naturalWidth, ih=fxImg.naturalHeight, dw=w/2, dh=w*ih/iw, s=.4+.6*(.5+.5*Math.cos(ph));
+    ctx.save(); ctx.translate(x,y+(landed?0:Math.sin(ph*.3)*w*.03)); ctx.shadowColor='rgba(232,201,106,.8)'; ctx.shadowBlur=w*.25;
+    ctx.drawImage(fxImg,0,0,iw/2,ih,-dw*s,-dh/2,dw*s,dh); ctx.drawImage(fxImg,iw/2,0,iw/2,ih,0,-dh/2,dw*s,dh); ctx.restore(); }
+  function spark(x,y,w,n){ for(let i=0;i<n;i++){ const ang=Math.random()*6.283,sp=(15+Math.random()*50)*dpr; a.parts.push({x:x+(Math.random()-.5)*w*.5,y:y+(Math.random()-.5)*w*.3,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp+12*dpr,life:0,max:.6+Math.random()*.8,r:(2+Math.random()*4)*dpr}); } }
+  function frame(now){
+    a.raf=requestAnimationFrame(frame); const dt=Math.min(.05,(now-a.last)/1000); a.last=now; a.phase+=dt*24;
+    const W=cv.width,H=cv.height,t=now-a.start,me=MYID(); ctx.clearRect(0,0,W,H);
+    const slots=[]; (tour.a||[]).forEach((id,i)=>{ if(id===me) slots.push({t0:3800+i*1800,dir:1}); }); (tour.b||[]).forEach((id,i)=>{ if(id===me) slots.push({t0:4100+i*1800,dir:-1}); });
+    const live=[];
+    for(const sl of slots){ const u=(t-sl.t0)/1700; if(u>=0&&u<=1){ const x=sl.dir>0?-.2*W+u*1.4*W:1.2*W-u*1.4*W, y=H*(.72-.4*u)+Math.sin(u*10)*H*.035; live.push({x,y,w:W*.34,landed:false}); } }
+    if(a.win&&a.win===me){ const el=document.getElementById('altm'), rc=el?el.getBoundingClientRect():null, t0=T-4300, u=ease((t-t0)/3300);
+      if(rc&&t>=t0){ const tx=(rc.left+rc.width/2)*dpr, ty=(rc.top+rc.height/2)*dpr, sx=W*1.15, sy=-H*.1, k=1-u;
+        live.push({x:tx+(sx-tx)*k+Math.sin(u*7)*W*.06*k,y:ty+(sy-ty)*k+Math.cos(u*6)*H*.03*k,w:(W*.34)*(1-u)+(rc.width*dpr)*u,landed:u>=1}); } }
+    for(const m of live) spark(m.x,m.y,m.w,m.landed?0:3);
+    ctx.globalCompositeOperation='lighter';
+    a.parts=a.parts.filter(p=>(p.life+=dt)<p.max); for(const p of a.parts){ p.x+=p.vx*dt; p.y+=p.vy*dt; const k=1-p.life/p.max, g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*2.4*k+1);
+      g.addColorStop(0,'rgba(255,240,170,'+.9*k+')'); g.addColorStop(.4,'rgba(232,201,106,'+.45*k+')'); g.addColorStop(1,'rgba(201,168,76,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*2.4*k+1,0,6.283); ctx.fill(); }
+    ctx.globalCompositeOperation='source-over';
+    for(const m of live) moth(m.x,m.y,m.w,a.phase,m.landed);
+  }
+  a.raf=requestAnimationFrame(frame);
+}
 function altRender(md,entered,myVote){
   const A=document.getElementById('alt'); let h='';
   const r=st.raffle||{state:'idle'}, v=st.vote||{state:'idle',options:[]}, M='<img src="'+document.querySelector('#join img').src+'" alt="">';
   if(md==='raffle'){
     if(r.state==='open') h=entered?M+'<div class="t">You\'re in!</div><div class="s">'+(r.prize?'Prize: <b>'+esc(r.prize)+'</b><br>':'')+r.count+' '+(r.count===1?'entry':'entries')+' so far. Good luck!</div>'
       :(r.prize?'<div class="s">Prize: <b style="color:var(--gold2)">'+esc(r.prize)+'</b></div>':'')+'<button class="abig" data-act="enter">ENTER</button><div class="s">Tap to enter the free drawing</div>';
-    else if(r.state==='drawing') h=M+'<div class="t">The moth is choosing…</div><div class="s">Watch the big screen!</div>';
-    else if(r.state==='done'){ const w=r.winner, me=w&&w.id===MYID(); h=me?M+'<div class="t">YOU WON! 🎉</div><div class="s">'+(r.prize?'<b>'+esc(r.prize)+'</b><br>':'')+'Find the host to claim it.</div>':M+'<div class="t">'+esc(w?w.name:'')+'</div><div class="s">won this draw'+(entered?'. Maybe next time!':'.')+'</div>'; }
+    else if(r.state==='drawing') h=M.replace('<img','<img style="visibility:hidden"')+'<div class="t">The moth is choosing…</div><div class="s">Watch the big screen!</div>';
+    else if(r.state==='done'){ const w=r.winner, me=w&&w.id===MYID(); h=me?M+'<div class="t">YOU WON!</div><div class="s">'+(r.prize?'<b>'+esc(r.prize)+'</b><br>':'')+'Find the host to claim it.</div>':M+'<div class="t">'+esc(w?w.name:'')+'</div><div class="s">won this draw'+(entered?'. Maybe next time!':'.')+'</div>'; }
     else h=M+'<div class="t">Raffle coming up</div><div class="s">Hang tight — you\'ll get a button to enter.</div>';
   } else if(md==='vote'){
     if(v.state==='open'||v.state==='closed'){
@@ -159,11 +198,12 @@ function altRender(md,entered,myVote){
     } else h=M+'<div class="t">Vote coming up</div><div class="s">Get ready to pick.</div>';
   } else h=M+'<div class="t">Waiting</div><div class="s">for the host to pick a game</div>';
   if(A.dataset.h!==h){ A.dataset.h=h; A.innerHTML=h; }
+  fxSync();
 }
 document.getElementById('alt').addEventListener('click',e=>{ const b=e.target.closest('button[data-act]'); if(!b) return;
   if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i));
   try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} });
-function altShow(on){ document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
+function altShow(on){ if(!on) fxStop(); document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
 const MYID = () => pid;
 const myVotes = {}; const myVoteFor = id => (id != null && myVotes[id] != null) ? myVotes[id] : (() => { try { const x = JSON.parse(LS.get('moth-vote-' + code) || 'null'); return x && x.vid === id ? x.idx : null; } catch (e) { return null; } })();
 function sendEnter(){ if (!st || !st.raffle) return; set(ref(db, base() + '/raffle/' + pid), { rid: st.raffle.id }).catch(()=>{}); }
