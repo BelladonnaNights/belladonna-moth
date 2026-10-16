@@ -37,9 +37,10 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 #moth{position:absolute;top:-6%;left:50%;width:52%;margin-left:-26%;z-index:2;pointer-events:none;opacity:.95;filter:drop-shadow(0 0 10px rgba(0,0,0,.6));transition:top .35s,transform .35s;animation:flutter 1.6s ease-in-out infinite}
 #moth.landed{top:-12%;animation:none;transform:scale(.78)}
 @keyframes flutter{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(4deg)}}
+#alt img{animation:none!important}
 #msg{font-family:var(--cinzel);letter-spacing:.14em;text-transform:uppercase;font-size:14px;color:var(--text2);text-align:center;min-height:36px;line-height:1.4}
 #msg b{color:var(--gold2)}
-#alt{display:none;width:100%;max-width:420px;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:28px 4px 12px;overflow-y:auto;overflow-x:hidden;max-height:100%}
+#alt{display:none;width:100%;max-width:420px;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:28px 4px 12px;overflow:visible}
 #alt>*{flex:none}
 #alt .t{font-family:var(--display);font-size:46px;letter-spacing:.05em;color:var(--gold2);line-height:1}#alt .s{color:var(--text2);font-size:15px;line-height:1.4}#alt img{width:34vw;max-width:150px;filter:drop-shadow(0 0 14px rgba(232,201,106,.5));animation:flutter 1.6s ease-in-out infinite}
 #alt .q{font-family:var(--display);font-size:34px;color:var(--text);letter-spacing:.03em;line-height:1.05}
@@ -50,7 +51,7 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 #flash{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .5s}
 #conn{position:fixed;left:0;right:0;top:0;background:#7a1e1e;color:#fff;text-align:center;padding:6px;font-size:13px;display:none;z-index:9}
 </style></head><body>
-<div id="conn">Reconnecting…</div><div id="flash"></div>
+<div id="conn">Reconnecting…</div><div id="flash"></div><div id="ver" style="position:fixed;bottom:3px;left:0;right:0;text-align:center;font-size:10px;color:#4a4338;pointer-events:none">v3</div>
 <header><div class="brand" id="gname">Belladonna Moth</div></header>
 <div class="me" id="me" style="display:none"><span id="myname"></span><span class="score" id="myscore">0</span></div>
 <main>
@@ -183,7 +184,7 @@ function fxSync(){
 }
 function altRender(md,entered,myVote){
   const A=document.getElementById('alt'); let h='';
-  const r=st.raffle||{state:'idle'}, v=st.vote||{state:'idle',options:[]}, M='<img src="'+document.querySelector('#join img').src+'" alt="">';
+  const r=st.raffle||{state:'idle'}, v=st.vote||{state:'idle',options:[]}, M='<img id="altm" src="'+document.querySelector('#join img').src+'" alt="">';
   if(md==='raffle'){
     if(r.state==='open') h=entered?M+'<div class="t">You\'re in!</div><div class="s">'+(r.prize?'Prize: <b>'+esc(r.prize)+'</b><br>':'')+r.count+' '+(r.count===1?'entry':'entries')+' so far. Good luck!</div>'
       :(r.prize?'<div class="s">Prize: <b style="color:var(--gold2)">'+esc(r.prize)+'</b></div>':'')+'<button class="abig" data-act="enter">ENTER</button><div class="s">Tap to enter the free drawing</div>';
