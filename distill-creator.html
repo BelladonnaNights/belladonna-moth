@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Distill — Belladonna Audio Alchemies</title>
+<title>Distill Creator — Belladonna Audio Alchemies</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -516,24 +516,59 @@
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
+
+  .intro { font-size: 1.05rem; color: var(--bone-dim); line-height: 1.5; }
+  .intro b { color: var(--gilt); font-weight: 600; }
+  .loader { border: 1px dashed var(--bronze); background: var(--void-2); padding: 20px 22px; }
+  .loader.drag { border-color: var(--gilt); background: rgba(230,195,74,0.06); }
+  .loader-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: flex-end; }
+  .loader-row .mono-label { flex: 1 1 200px; }
+  .loader-row .text-input { width: 100%; flex: 0 0 auto; }
+  .stemlist { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .stemtag { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.08em; border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; color: var(--bone-dim); }
+  .stemtag.ok { border-color: var(--ok); color: var(--bone); }
+  .save-hint { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.05em; color: var(--bone-dim); margin-top: 14px; line-height: 1.6; }
+  .save-hint b { color: var(--gilt); }
+  .back { font-family: 'Space Mono', monospace; font-size: 0.62rem; letter-spacing: 0.14em; color: var(--bone-dim); text-decoration: none; float: right; margin-top: 8px; }
+  .back:hover { color: var(--gilt); }
 </style>
 </head>
 <body>
 <header class="masthead">
   <div class="masthead-inner">
     <div class="wordmark"><span class="wm-white">BELLADONNA</span><span class="wm-gold">DISTILLATION</span></div>
+    <div class="eyebrow" style="margin-top:6px;">Distill Creator</div>
   </div>
 </header>
 <div class="app">
+
+  <p class="intro">Build the <b>reveal track</b> for a Distill song: load its four stems, choose the order they come in and how long each one plays alone, then create one MP3. Save that MP3 in your Music folder inside a folder named <b>distill</b> — the Moth game hub plays it from there.</p>
+
+  <section class="loader" id="loader">
+    <div class="eyebrow">1 · Load the four stems</div>
+    <div class="loader-row">
+      <button id="loadSongBtn" class="ghost-btn" type="button">CHOOSE 4 STEM FILES</button>
+      <span class="mono-hint" style="margin:0;align-self:center;">…or drop them anywhere in this box. Names should include drums, bass, backing (or other) and vocals.</span>
+      <input id="fileInput" type="file" accept="audio/*" multiple hidden>
+    </div>
+    <div class="stemlist" id="stemList"></div>
+    <div class="loader-row">
+      <label class="mono-label">SONG TITLE
+        <input id="titleIn" class="text-input" type="text" placeholder="e.g. Bohemian Rhapsody">
+      </label>
+      <label class="mono-label">ARTIST
+        <input id="artistIn" class="text-input" type="text" placeholder="e.g. Queen">
+      </label>
+    </div>
+  </section>
 
   <header class="transport">
     <div class="transport-top">
       <div class="title-block">
         <h1 class="song-title" id="songTitle">NO SONG LOADED</h1>
-        <div class="song-artist" id="songArtist">Load one from the Vault below</div>
+        <div class="song-artist" id="songArtist">Load the stems above</div>
       </div>
       <div class="transport-side">
-        <div class="sync-indicator" id="syncIndicator"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">CONNECTING</span></div>
         <button id="masterPlay" class="master-btn" type="button" aria-label="Play">
           <span class="icon-play" aria-hidden="true"></span>
           <span class="icon-pause" aria-hidden="true"><i></i><i></i></span>
@@ -549,25 +584,21 @@
 
   <section class="channels-wrap" id="channelsWrap">
     <div class="playhead" id="playhead"></div>
-
     <div class="channel" data-stem="drums">
       <button class="channel-toggle" data-stem="drums" type="button" aria-label="Toggle drums"><span class="tri" aria-hidden="true"></span><span class="ch-pause" aria-hidden="true"><i></i><i></i></span></button>
       <div class="channel-meta"><span class="channel-label">DRUMS</span></div>
       <canvas class="channel-canvas" data-stem="drums"></canvas>
     </div>
-
     <div class="channel" data-stem="bass">
       <button class="channel-toggle" data-stem="bass" type="button" aria-label="Toggle bass"><span class="tri" aria-hidden="true"></span><span class="ch-pause" aria-hidden="true"><i></i><i></i></span></button>
       <div class="channel-meta"><span class="channel-label">BASS</span></div>
       <canvas class="channel-canvas" data-stem="bass"></canvas>
     </div>
-
     <div class="channel" data-stem="other">
       <button class="channel-toggle" data-stem="other" type="button" aria-label="Toggle other"><span class="tri" aria-hidden="true"></span><span class="ch-pause" aria-hidden="true"><i></i><i></i></span></button>
       <div class="channel-meta"><span class="channel-label">BACKING</span></div>
       <canvas class="channel-canvas" data-stem="other"></canvas>
     </div>
-
     <div class="channel" data-stem="vocals">
       <button class="channel-toggle" data-stem="vocals" type="button" aria-label="Toggle vocals"><span class="tri" aria-hidden="true"></span><span class="ch-pause" aria-hidden="true"><i></i><i></i></span></button>
       <div class="channel-meta"><span class="channel-label">VOCALS</span></div>
@@ -577,7 +608,7 @@
 
   <section class="sequencer">
     <div class="sequencer-head">
-      <div class="eyebrow">Reveal Sequence</div>
+      <div class="eyebrow">2 · Reveal sequence</div>
       <div class="sequencer-controls">
         <label class="mono-label">START AT (SEC)
           <input id="startTime" class="num-input" type="number" min="0" step="0.1" value="0">
@@ -585,46 +616,23 @@
         <label class="mono-label">SECONDS PER PART
           <input id="stepDuration" class="num-input" type="number" min="2" max="60" value="8">
         </label>
-        <button id="playAllBtn" class="ghost-btn" type="button">PLAY ALL</button>
+        <button id="playAllBtn" class="ghost-btn" type="button">PREVIEW REVEAL</button>
         <button id="stopSeqBtn" class="ghost-btn" type="button" disabled>STOP</button>
-        <button id="exportMp3Btn" class="ghost-btn" type="button" disabled>DOWNLOAD MP3</button>
       </div>
     </div>
     <ol id="sequenceOrder" class="sequence-order"></ol>
-    <div id="countdown" class="countdown">PRESS PLAY ALL TO BEGIN THE REVEAL</div>
+    <div id="countdown" class="countdown">LOAD THE STEMS TO BEGIN</div>
   </section>
 
-  <section class="queue">
-    <div class="queue-head">
-      <div class="eyebrow">Queue</div>
-      <button id="clearQueueBtn" class="ghost-btn" type="button">CLEAR QUEUE</button>
-    </div>
-    <ol id="queueList" class="queue-list"></ol>
-    <div id="queueEmpty" class="mono-hint">QUEUE IS EMPTY — ADD SONGS FROM THE VAULT BELOW</div>
-  </section>
-
-  <section class="vault">
-    <div class="vault-head">
-      <div class="eyebrow">Vault</div>
-      <div class="vault-actions">
-        <input id="vaultSearch" class="text-input" type="text" placeholder="SEARCH VAULT…">
-        <button id="loadSongBtn" class="ghost-btn" type="button">LOAD SONG</button>
-        <input id="fileInput" type="file" accept="audio/*" multiple hidden>
+  <section class="sequencer">
+    <div class="sequencer-head">
+      <div class="eyebrow">3 · Create the reveal MP3</div>
+      <div class="sequencer-controls">
+        <button id="exportMp3Btn" class="ghost-btn" type="button" disabled>CREATE REVEAL MP3</button>
       </div>
     </div>
-    <div id="vaultList" class="vault-list"></div>
-    <div class="eyebrow" style="margin:18px 0 8px;">Add Song to Vault</div>
-    <form id="addSongForm" class="add-song-form">
-      <input id="addName" class="text-input" type="text" placeholder="SONG NAME" required>
-      <input id="addArtist" class="text-input" type="text" placeholder="ARTIST (OPTIONAL)">
-      <input id="addDrums" class="text-input" type="url" placeholder="DRUMS URL" required>
-      <input id="addBass" class="text-input" type="url" placeholder="BASS URL" required>
-      <input id="addOther" class="text-input" type="url" placeholder="BACKING URL" required>
-      <input id="addVocals" class="text-input" type="url" placeholder="VOCALS URL" required>
-      <button type="submit" id="addSongSubmitBtn" class="ghost-btn">SAVE TO VAULT</button>
-      <button type="button" id="cancelEditBtn" class="ghost-btn" hidden>CANCEL EDIT</button>
-    </form>
-    <div class="mono-hint">PASTE THE 4 PUBLIC R2 LINKS AFTER UPLOADING THE STEMS TO YOUR BUCKET.</div>
+    <div id="exportMsg" class="countdown" style="margin-top:0">&nbsp;</div>
+    <div class="save-hint">The file is named <b>Artist - Title.mp3</b> and carries the stem order and timing inside it, so the TV in the game hub can light each stem as it enters.<br>Save it in your Music folder → <b>distill</b>. Then add the song to a Distill list in the Moth admin page.</div>
   </section>
 
   <div class="foot-mark">BELLADONNA AUDIO ALCHEMIES</div>
@@ -632,1085 +640,222 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
-
-  var firebaseConfig = {
-    apiKey: "AIzaSyAmTnP1SOVRwPP1NuSli-S27ionB7N8odw",
-    authDomain: "distill-music.firebaseapp.com",
-    projectId: "distill-music",
-    storageBucket: "distill-music.firebasestorage.app",
-    messagingSenderId: "780303563815",
-    appId: "1:780303563815:web:d33cc3fb09480ccc7ee202"
-  };
-  var firebaseApp = initializeApp(firebaseConfig);
-  var db = getFirestore(firebaseApp);
-  var songsCol = collection(db, "songs");
-
+<script>
+(function () {
+  'use strict';
   var STEMS = ['drums', 'bass', 'other', 'vocals'];
   var STEM_LABELS = { drums: 'DRUMS', bass: 'BASS', other: 'BACKING', vocals: 'VOCALS' };
-  var COLOR_PLAYED = '#e8c468';
-  var COLOR_UNPLAYED = 'rgba(138,106,66,0.45)';
+  var COLOR_PLAYED = '#e8c468', COLOR_UNPLAYED = 'rgba(138,106,66,0.45)';
 
   var state = {
-    audioEls: {},
-    audioBuffers: {},
-    peaks: {},
-    onsetFractions: {},
-    analysisFailed: {},
-    vaultSongs: [],
-    queue: [],
-    canvases: {},
-    channelRows: {},
-    channelOn: { drums: true, bass: true, other: true, vocals: true },
-    isPlaying: false,
-    duration: 0,
-    rafId: null,
-    analysisCtx: null,
-    currentSong: null,
-    editingSongId: null,
-    sequence: {
-      order: ['drums', 'bass', 'other', 'vocals'],
-      step: 8,
-      startTime: null,
-      running: false,
-      index: 0,
-      remaining: 0,
-      timerId: null
-    }
+    audioEls: {}, audioBuffers: {}, peaks: {}, onsetFractions: {}, analysisFailed: {},
+    canvases: {}, channelRows: {}, channelOn: { drums: true, bass: true, other: true, vocals: true },
+    isPlaying: false, duration: 0, rafId: null, analysisCtx: null, loaded: false, rendering: false,
+    sequence: { order: ['drums', 'bass', 'other', 'vocals'], step: 8, startTime: null, running: false, index: 0, remaining: 0, timerId: null }
   };
-
   var dom = {};
+  var $ = function (id) { return document.getElementById(id); };
 
-  window.addEventListener('error', function (e) {
-    console.error('Script error:', e.message);
-  });
-  window.addEventListener('unhandledrejection', function (e) {
-    console.error('Unhandled rejection:', e.reason);
-  });
-
-  function formatTime(sec) {
-    sec = Math.max(0, sec || 0);
-    var m = Math.floor(sec / 60);
-    var s = Math.floor(sec % 60);
-    return m + ':' + (s < 10 ? '0' : '') + s;
-  }
-
-  function getCurrentTime() {
-    return state.audioEls.drums ? state.audioEls.drums.currentTime : 0;
-  }
-
-  function sizeCanvas(canvas) {
-    var rect = canvas.getBoundingClientRect();
-    var dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-    canvas.ctx = canvas.getContext('2d');
-  }
+  function formatTime(sec) { sec = Math.max(0, sec || 0); var m = Math.floor(sec / 60), s = Math.floor(sec % 60); return m + ':' + (s < 10 ? '0' : '') + s; }
+  function getCurrentTime() { return state.audioEls.drums ? state.audioEls.drums.currentTime : 0; }
+  function sizeCanvas(c) { var r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1; c.width = Math.max(1, Math.floor(r.width * d)); c.height = Math.max(1, Math.floor(r.height * d)); c.ctx = c.getContext('2d'); }
 
   function drawChannel(stem) {
-    var canvas = state.canvases[stem];
-    if (!canvas || !canvas.ctx) return;
-    var ctx = canvas.ctx;
-    var w = canvas.width;
-    var h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-
+    var canvas = state.canvases[stem]; if (!canvas || !canvas.ctx) return;
+    var ctx = canvas.ctx, w = canvas.width, h = canvas.height; ctx.clearRect(0, 0, w, h);
     var peaks = state.peaks[stem];
-    if (!peaks) {
-      ctx.fillStyle = 'rgba(138,106,66,0.6)';
-      ctx.font = Math.round(h * 0.2) + 'px "Space Mono", monospace';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('ANALYZING', 10, h / 2);
-      return;
-    }
-
-    var mid = h / 2;
-    var barW = w / peaks.length;
-    var progress = state.duration ? (getCurrentTime() / state.duration) : 0;
-
+    if (!peaks) { if (state.loaded) { ctx.fillStyle = 'rgba(138,106,66,0.6)'; ctx.font = Math.round(h * 0.2) + 'px "Space Mono", monospace'; ctx.textBaseline = 'middle'; ctx.fillText('ANALYZING', 10, h / 2); } return; }
+    var mid = h / 2, barW = w / peaks.length, progress = state.duration ? (getCurrentTime() / state.duration) : 0;
     for (var i = 0; i < peaks.length; i++) {
       var barH = Math.max(1, peaks[i] * h * 0.92);
-      var x = i * barW;
-      var played = (i / peaks.length) <= progress;
-      ctx.fillStyle = played ? COLOR_PLAYED : COLOR_UNPLAYED;
-      ctx.fillRect(x, mid - barH / 2, Math.max(1, barW - 0.6), barH);
+      ctx.fillStyle = (i / peaks.length) <= progress ? COLOR_PLAYED : COLOR_UNPLAYED;
+      ctx.fillRect(i * barW, mid - barH / 2, Math.max(1, barW - 0.6), barH);
     }
-
-    var onsetFrac = state.onsetFractions[stem];
-    if (typeof onsetFrac === 'number') {
-      var onsetX = onsetFrac * w;
-      var markerW = Math.max(2, w * 0.0025);
-      ctx.fillStyle = '#f2ede1';
-      ctx.fillRect(onsetX, 0, markerW, h);
-    }
+    var of = state.onsetFractions[stem];
+    if (typeof of === 'number') { ctx.fillStyle = '#f2ede1'; ctx.fillRect(of * w, 0, Math.max(2, w * 0.0025), h); }
   }
 
-  function analyzePeaks(stem, url) {
-    if (!state.analysisCtx) {
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      state.analysisCtx = new Ctx();
-    }
-    fetch(url)
-      .then(function (resp) { return resp.arrayBuffer(); })
-      .then(function (buf) { return state.analysisCtx.decodeAudioData(buf); })
-      .then(function (audioBuffer) {
-        state.audioBuffers[stem] = audioBuffer;
-        var raw = audioBuffer.getChannelData(0);
-        var numBuckets = 320;
-        var bucketSize = Math.floor(raw.length / numBuckets) || 1;
-        var peaks = new Array(numBuckets).fill(0);
-        for (var i = 0; i < numBuckets; i++) {
-          var max = 0;
-          var start = i * bucketSize;
-          var end = Math.min(start + bucketSize, raw.length);
-          for (var j = start; j < end; j++) {
-            var v = Math.abs(raw[j]);
-            if (v > max) max = v;
-          }
-          peaks[i] = max;
-        }
-
-        var globalMax = 0.0001;
-        for (var k = 0; k < peaks.length; k++) { if (peaks[k] > globalMax) globalMax = peaks[k]; }
-        var linear = new Array(peaks.length);
-        for (var m = 0; m < peaks.length; m++) { linear[m] = peaks[m] / globalMax; }
-
-        var onsetIdx = 0;
-        for (var n = 0; n < linear.length; n++) {
-          if (linear[n] > 0.15) { onsetIdx = n; break; }
-        }
-        state.onsetFractions[stem] = onsetIdx / linear.length;
-
-        var sorted = linear.slice().sort(function (a, b) { return a - b; });
-        var refMax = sorted[Math.floor(sorted.length * 0.97)] || sorted[sorted.length - 1] || 0.0001;
-        if (refMax < 0.05) refMax = 0.05;
-        var visual = new Array(linear.length);
-        for (var p = 0; p < linear.length; p++) {
-          var scaled = linear[p] / refMax;
-          if (scaled > 1) scaled = 1;
-          visual[p] = Math.pow(scaled, 0.6);
-        }
-        state.peaks[stem] = visual;
-
-        drawChannel(stem);
-        updateExportButtonState();
-      })
-      .catch(function (err) {
-        console.error('peak analysis failed for', stem, err);
-        state.analysisFailed[stem] = true;
-        state.peaks[stem] = new Array(320).fill(0.15);
-        drawChannel(stem);
-        updateExportButtonState();
-      });
-  }
-
-  function updateExportButtonState() {
-    if (!dom.exportMp3Btn) return;
-    var failed = STEMS.some(function (s) { return state.analysisFailed[s]; });
-    if (failed) {
-      dom.exportMp3Btn.disabled = true;
-      dom.exportMp3Btn.textContent = 'ANALYSIS FAILED';
-      return;
-    }
-    var allReady = !!state.currentSong && STEMS.every(function (s) { return !!state.audioBuffers[s]; });
-    dom.exportMp3Btn.disabled = !allReady;
-    dom.exportMp3Btn.textContent = allReady ? 'DOWNLOAD MP3' : 'ANALYZING…';
-  }
-
-  function fadeVolume(el, target) {
-    var start = el.volume;
-    var startTime = performance.now();
-    var dur = 150;
-    function step(now) {
-      var p = Math.min(1, (now - startTime) / dur);
-      el.volume = start + (target - start) * p;
-      if (p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  function updateChannelClasses() {
-    STEMS.forEach(function (stem) {
-      var row = state.channelRows[stem];
-      if (row) {
-        row.classList.toggle('audible', state.channelOn[stem]);
-        row.classList.toggle('playing', state.channelOn[stem] && state.isPlaying);
-      }
+  function analyzePeaks(stem, url, token) {
+    if (!state.analysisCtx) { var Ctx = window.AudioContext || window.webkitAudioContext; state.analysisCtx = new Ctx(); }
+    fetch(url).then(function (r) { return r.arrayBuffer(); }).then(function (b) { return state.analysisCtx.decodeAudioData(b); }).then(function (buf) {
+      if (token !== state.token) return;
+      state.audioBuffers[stem] = buf;
+      if (stem === 'drums' && !(state.duration > 0)) { state.duration = buf.duration; dom.timeTotal.textContent = formatTime(state.duration); }
+      var raw = buf.getChannelData(0), N = 320, bs = Math.floor(raw.length / N) || 1, peaks = new Array(N).fill(0);
+      for (var i = 0; i < N; i++) { var max = 0; for (var j = i * bs, e = Math.min(j + bs, raw.length); j < e; j++) { var v = Math.abs(raw[j]); if (v > max) max = v; } peaks[i] = max; }
+      var gm = 0.0001; peaks.forEach(function (p) { if (p > gm) gm = p; });
+      var lin = peaks.map(function (p) { return p / gm; }), oi = 0;
+      for (var n = 0; n < lin.length; n++) { if (lin[n] > 0.15) { oi = n; break; } }
+      state.onsetFractions[stem] = oi / lin.length;
+      var sorted = lin.slice().sort(function (a, b) { return a - b; });
+      var rm = sorted[Math.floor(sorted.length * 0.97)] || sorted[sorted.length - 1] || 0.0001; if (rm < 0.05) rm = 0.05;
+      state.peaks[stem] = lin.map(function (p) { return Math.pow(Math.min(1, p / rm), 0.6); });
+      drawChannel(stem); updateExportState();
+    }).catch(function (err) {
+      if (token !== state.token) return;
+      console.error('analysis failed for', stem, err); state.analysisFailed[stem] = true; state.peaks[stem] = new Array(320).fill(0.15); drawChannel(stem); updateExportState();
     });
   }
 
-  function setChannelVolume(stem, on) {
-    state.channelOn[stem] = on;
-    var el = state.audioEls[stem];
-    if (el) fadeVolume(el, on ? 1 : 0);
-    updateChannelClasses();
+  function updateExportState() {
+    var b = dom.exportMp3Btn; if (state.rendering) return;
+    if (STEMS.some(function (s) { return state.analysisFailed[s]; })) { b.disabled = true; b.textContent = 'ANALYSIS FAILED — RELOAD THE STEMS'; return; }
+    var ready = state.loaded && STEMS.every(function (s) { return !!state.audioBuffers[s]; });
+    b.disabled = !ready; b.textContent = !state.loaded ? 'CREATE REVEAL MP3' : ready ? 'CREATE REVEAL MP3' : 'ANALYZING…';
   }
 
-  function toggleChannel(stem) {
-    var newOn = !state.channelOn[stem];
-    setChannelVolume(stem, newOn);
-    if (newOn && !state.isPlaying) playAll();
-  }
+  function fadeVolume(el, target) { var s = el.volume, t0 = performance.now(); (function step(now) { var p = Math.min(1, (now - t0) / 150); el.volume = s + (target - s) * p; if (p < 1) requestAnimationFrame(step); })(t0); }
+  function updateChannelClasses() { STEMS.forEach(function (s) { var r = state.channelRows[s]; if (r) { r.classList.toggle('audible', state.channelOn[s]); r.classList.toggle('playing', state.channelOn[s] && state.isPlaying); } }); }
+  function setChannelVolume(stem, on) { state.channelOn[stem] = on; var el = state.audioEls[stem]; if (el) fadeVolume(el, on ? 1 : 0); updateChannelClasses(); }
+  function toggleChannel(stem) { if (!state.loaded) return; var on = !state.channelOn[stem]; setChannelVolume(stem, on); if (on && !state.isPlaying) playAll(); }
+  function playAll() { if (!state.loaded) return; STEMS.forEach(function (s) { var el = state.audioEls[s]; if (el) el.play().catch(function () {}); }); state.isPlaying = true; dom.masterPlay.classList.add('is-playing'); updateChannelClasses(); startRaf(); }
+  function pauseAll() { STEMS.forEach(function (s) { var el = state.audioEls[s]; if (el) el.pause(); }); state.isPlaying = false; dom.masterPlay.classList.remove('is-playing'); updateChannelClasses(); stopRaf(); }
+  function seekAll(t) { STEMS.forEach(function (s) { var el = state.audioEls[s]; if (el) el.currentTime = t; }); updateProgressUI(); }
 
-  function playAll() {
-    STEMS.forEach(function (stem) {
-      var el = state.audioEls[stem];
-      if (el) el.play().catch(function () {});
-    });
-    state.isPlaying = true;
-    dom.masterPlay.classList.add('is-playing');
-    dom.masterPlay.setAttribute('aria-label', 'Pause');
-    updateChannelClasses();
-    startRaf();
+  function updatePlayhead(frac) {
+    var c = state.canvases.drums; if (!c) return; var a = dom.channelsWrap.getBoundingClientRect(), b = c.getBoundingClientRect();
+    dom.playhead.style.left = (b.left - a.left + frac * b.width) + 'px';
   }
-
-  function pauseAll() {
-    STEMS.forEach(function (stem) {
-      var el = state.audioEls[stem];
-      if (el) el.pause();
-    });
-    state.isPlaying = false;
-    dom.masterPlay.classList.remove('is-playing');
-    dom.masterPlay.setAttribute('aria-label', 'Play');
-    updateChannelClasses();
-    stopRaf();
-  }
-
-  function togglePlayPause() {
-    if (state.isPlaying) pauseAll(); else playAll();
-  }
-
-  function seekAll(time) {
-    STEMS.forEach(function (stem) {
-      var el = state.audioEls[stem];
-      if (el) el.currentTime = time;
-    });
-    updateProgressUI();
-  }
-
-  function updatePlayheadPosition(frac) {
-    var refCanvas = state.canvases.drums;
-    if (!refCanvas) return;
-    var wrapRect = dom.channelsWrap.getBoundingClientRect();
-    var canvasRect = refCanvas.getBoundingClientRect();
-    var offsetLeft = canvasRect.left - wrapRect.left;
-    dom.playhead.style.left = (offsetLeft + frac * canvasRect.width) + 'px';
-  }
-
   function updateProgressUI() {
-    var t = getCurrentTime();
-    var d = state.duration || 0;
-    dom.timeCurrent.textContent = formatTime(t);
-    dom.timeTotal.textContent = formatTime(d);
-    var frac = d ? (t / d) : 0;
-    dom.scrubber.value = Math.round(frac * 1000);
-    updatePlayheadPosition(frac);
-    STEMS.forEach(drawChannel);
-    if (state.isPlaying && d && t >= d - 0.05) {
-      pauseAll();
-      seekAll(0);
-    }
+    var t = getCurrentTime(), d = state.duration || 0;
+    dom.timeCurrent.textContent = formatTime(t); dom.timeTotal.textContent = formatTime(d);
+    var frac = d ? t / d : 0; dom.scrubber.value = Math.round(frac * 1000); updatePlayhead(frac); STEMS.forEach(drawChannel);
+    if (state.isPlaying && d && t >= d - 0.05) { pauseAll(); seekAll(0); }
   }
+  function startRaf() { (function tick() { updateProgressUI(); state.rafId = requestAnimationFrame(tick); })(); }
+  function stopRaf() { if (state.rafId) cancelAnimationFrame(state.rafId); state.rafId = null; updateProgressUI(); }
 
-  function startRaf() {
-    function tick() {
-      updateProgressUI();
-      state.rafId = requestAnimationFrame(tick);
-    }
-    state.rafId = requestAnimationFrame(tick);
-  }
-
-  function stopRaf() {
-    if (state.rafId) cancelAnimationFrame(state.rafId);
-    state.rafId = null;
-    updateProgressUI();
-  }
-
-  function renderSequenceChips() {
+  /* ── sequence order chips ── */
+  function renderChips() {
     dom.sequenceOrder.innerHTML = '';
     state.sequence.order.forEach(function (stem, idx) {
-      var li = document.createElement('li');
-      li.className = 'sequence-chip';
-      li.dataset.stem = stem;
-      li.draggable = true;
-
-      var grip = document.createElement('span');
-      grip.className = 'grip';
-      grip.setAttribute('aria-hidden', 'true');
-      grip.appendChild(document.createElement('span'));
-      grip.appendChild(document.createElement('span'));
-      grip.appendChild(document.createElement('span'));
-
-      var numSpan = document.createElement('span');
-      numSpan.className = 'order-num';
-      numSpan.textContent = (idx + 1) + '.';
-
-      var labelSpan = document.createElement('span');
-      labelSpan.textContent = STEM_LABELS[stem];
-
-      var arrows = document.createElement('span');
-      arrows.className = 'chip-arrows';
-
-      var up = document.createElement('button');
-      up.type = 'button';
-      up.textContent = 'UP';
-      up.setAttribute('aria-label', 'Move ' + STEM_LABELS[stem] + ' earlier');
-
-      var down = document.createElement('button');
-      down.type = 'button';
-      down.textContent = 'DN';
-      down.setAttribute('aria-label', 'Move ' + STEM_LABELS[stem] + ' later');
-
-      arrows.appendChild(up);
-      arrows.appendChild(down);
-      li.appendChild(grip);
-      li.appendChild(numSpan);
-      li.appendChild(labelSpan);
-      li.appendChild(arrows);
-      dom.sequenceOrder.appendChild(li);
-
-      up.addEventListener('click', function () { moveOrder(idx, -1); });
-      down.addEventListener('click', function () { moveOrder(idx, 1); });
-
-      li.addEventListener('dragstart', function (e) {
-        e.dataTransfer.setData('text/plain', String(idx));
-        e.dataTransfer.effectAllowed = 'move';
-        li.classList.add('dragging');
-      });
+      var li = document.createElement('li'); li.className = 'sequence-chip'; li.draggable = true;
+      li.innerHTML = '<span class="grip"><span></span><span></span><span></span></span><span class="order-num">' + (idx + 1) + '.</span><span>' + STEM_LABELS[stem] + '</span><span class="chip-arrows"><button type="button" aria-label="Move earlier">UP</button><button type="button" aria-label="Move later">DN</button></span>';
+      var b = li.querySelectorAll('button'); b[0].addEventListener('click', function () { moveOrder(idx, -1); }); b[1].addEventListener('click', function () { moveOrder(idx, 1); });
+      li.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', String(idx)); e.dataTransfer.effectAllowed = 'move'; li.classList.add('dragging'); });
       li.addEventListener('dragend', function () { li.classList.remove('dragging'); });
-      li.addEventListener('dragover', function (e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        li.classList.add('drag-over');
-      });
+      li.addEventListener('dragover', function (e) { e.preventDefault(); e.stopPropagation(); li.classList.add('drag-over'); });
       li.addEventListener('dragleave', function () { li.classList.remove('drag-over'); });
-      li.addEventListener('drop', function (e) {
-        e.preventDefault();
-        li.classList.remove('drag-over');
-        var fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
-        if (isNaN(fromIdx) || fromIdx === idx) return;
-        var order = state.sequence.order;
-        var moved = order.splice(fromIdx, 1)[0];
-        order.splice(idx, 0, moved);
-        renderSequenceChips();
-        persistSequenceSettings();
-      });
+      li.addEventListener('drop', function (e) { e.preventDefault(); e.stopPropagation(); li.classList.remove('drag-over'); var from = parseInt(e.dataTransfer.getData('text/plain'), 10); if (isNaN(from) || from === idx) return; var o = state.sequence.order, m = o.splice(from, 1)[0]; o.splice(idx, 0, m); renderChips(); });
+      dom.sequenceOrder.appendChild(li);
     });
   }
+  function moveOrder(i, d) { var o = state.sequence.order, j = i + d; if (j < 0 || j >= o.length) return; var t = o[i]; o[i] = o[j]; o[j] = t; renderChips(); }
+  function highlightChip(i) { dom.sequenceOrder.querySelectorAll('.sequence-chip').forEach(function (c, k) { c.classList.toggle('active', k === i); }); }
 
-  function moveOrder(idx, dir) {
-    var order = state.sequence.order;
-    var newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= order.length) return;
-    var tmp = order[idx];
-    order[idx] = order[newIdx];
-    order[newIdx] = tmp;
-    renderSequenceChips();
-    persistSequenceSettings();
-  }
-
-  function persistSequenceSettings() {
-    if (!state.currentSong || !state.currentSong.id) return;
-    updateDoc(doc(db, 'songs', state.currentSong.id), {
-      sequenceOrder: state.sequence.order,
-      stepSeconds: state.sequence.step,
-      startTime: state.sequence.startTime
-    }).catch(function (err) {
-      console.error('Failed to save sequence settings', err);
-    });
-  }
-
-  function highlightSequenceChip(idx) {
-    var chips = dom.sequenceOrder.querySelectorAll('.sequence-chip');
-    chips.forEach(function (c, i) { c.classList.toggle('active', i === idx); });
-  }
-
-  function clearSequenceHighlight() {
-    var chips = dom.sequenceOrder.querySelectorAll('.sequence-chip');
-    chips.forEach(function (c) { c.classList.remove('active'); });
-  }
-
-  function updateCountdownText() {
-    var stem = state.sequence.order[state.sequence.index];
-    dom.countdown.textContent = STEM_LABELS[stem] + ' — ' + state.sequence.remaining + 's';
-  }
-
-  function activateSequenceStep() {
-    var order = state.sequence.order;
-    var stem = order[state.sequence.index];
-    setChannelVolume(stem, true);
-    highlightSequenceChip(state.sequence.index);
-    state.sequence.remaining = state.sequence.step;
-    updateCountdownText();
-    clearInterval(state.sequence.timerId);
-    state.sequence.timerId = setInterval(function () {
-      state.sequence.remaining -= 1;
-      updateCountdownText();
-      if (state.sequence.remaining <= 0) {
-        clearInterval(state.sequence.timerId);
-        state.sequence.index += 1;
-        if (state.sequence.index < order.length) {
-          activateSequenceStep();
-        } else {
-          dom.countdown.textContent = 'FULL REVEAL';
-          endSequence();
-        }
-      }
+  function updateCountdown() { var s = state.sequence; dom.countdown.textContent = STEM_LABELS[s.order[s.index]] + ' — ' + s.remaining + 's'; }
+  function activateStep() {
+    var q = state.sequence; setChannelVolume(q.order[q.index], true); highlightChip(q.index); q.remaining = q.step; updateCountdown(); clearInterval(q.timerId);
+    q.timerId = setInterval(function () {
+      q.remaining -= 1; updateCountdown();
+      if (q.remaining <= 0) { clearInterval(q.timerId); q.index += 1; if (q.index < q.order.length) activateStep(); else { dom.countdown.textContent = 'FULL REVEAL'; endSequence(); } }
     }, 1000);
   }
-
   function startSequence() {
-    if (state.sequence.running || !state.currentSong) return;
-    state.sequence.running = true;
-    state.sequence.index = 0;
-    state.sequence.step = parseInt(dom.stepDuration.value, 10) || 8;
-    dom.playAllBtn.disabled = true;
-    dom.stopSeqBtn.disabled = false;
-
+    var q = state.sequence; if (q.running || !state.loaded) return;
+    q.running = true; q.index = 0; q.step = parseInt(dom.stepDuration.value, 10) || 8; dom.playAllBtn.disabled = true; dom.stopSeqBtn.disabled = false;
     STEMS.forEach(function (s) { setChannelVolume(s, false); });
-    var seekTime;
-    if (state.sequence.startTime != null) {
-      seekTime = state.sequence.startTime;
-    } else {
-      var startStem = state.sequence.order[0];
-      seekTime = (state.onsetFractions[startStem] || 0) * state.duration;
-    }
-    seekAll(seekTime);
-    if (!state.isPlaying) playAll();
-    activateSequenceStep();
+    seekAll(startAtSeconds()); if (!state.isPlaying) playAll(); activateStep();
   }
+  function endSequence() { var q = state.sequence; q.running = false; dom.playAllBtn.disabled = !state.loaded; dom.stopSeqBtn.disabled = true; clearInterval(q.timerId); dom.sequenceOrder.querySelectorAll('.sequence-chip').forEach(function (c) { c.classList.remove('active'); }); }
+  function stopSequence() { endSequence(); pauseAll(); dom.countdown.textContent = 'PRESS PREVIEW REVEAL TO HEAR IT'; }
+  function startAtSeconds() { var v = parseFloat(dom.startTime.value); if (!isNaN(v) && v > 0) return v; return (state.onsetFractions[state.sequence.order[0]] || 0) * state.duration; }
 
-  function endSequence() {
-    state.sequence.running = false;
-    dom.playAllBtn.disabled = false;
-    dom.stopSeqBtn.disabled = true;
-    clearInterval(state.sequence.timerId);
-    clearSequenceHighlight();
+  /* ── loading the four stems from this computer ── */
+  function stemTags() { dom.stemList.innerHTML = STEMS.map(function (s) { return '<span class="stemtag' + (state.files && state.files[s] ? ' ok' : '') + '">' + STEM_LABELS[s] + (state.files && state.files[s] ? ' ✓ ' + state.files[s].name : '') + '</span>'; }).join(''); }
+  function handleFiles(files) {
+    var mapped = {}, rest = [];
+    files.forEach(function (f) { var n = f.name.toLowerCase(); if (n.indexOf('vocal') !== -1) mapped.vocals = f; else if (n.indexOf('drum') !== -1) mapped.drums = f; else if (n.indexOf('bass') !== -1) mapped.bass = f; else if (/back|other|instrument/.test(n)) mapped.other = f; else rest.push(f); });
+    STEMS.forEach(function (s) { if (!mapped[s] && rest.length) mapped[s] = rest.shift(); });
+    var missing = STEMS.filter(function (s) { return !mapped[s]; });
+    if (missing.length) { alert('Could not match a file to: ' + missing.map(function (s) { return STEM_LABELS[s]; }).join(', ') + '. Choose exactly 4 files, one per stem.'); return; }
+    var raw = files[0].name.replace(/\.[^/.]+$/, '').replace(/[\(\[\{]\s*(vocals?|drums?|bass|other|backing|instrumental|stem)\s*[\)\]\}]/ig, ' ').replace(/[-_ ]?(vocals?|drums?|bass|other|backing|instrumental|stem)\b/ig, '').replace(/_/g, ' ').replace(/^\s*\d{1,3}[\s.\-_)]+(?=\S)/, '').replace(/\s+[-–—]\s*$/, '').replace(/\s+/g, ' ').trim();
+    var parts = raw.split(/\s+[-–—]\s+/), artist = '', title = raw || 'Untitled';
+    if (parts.length >= 2) { artist = parts[0].trim(); title = parts.slice(1).join(' - ').trim(); }
+    loadStems(mapped, title, artist);
   }
-
-  function stopSequence() {
-    endSequence();
-    pauseAll();
-    dom.countdown.textContent = 'PRESS PLAY ALL TO BEGIN THE REVEAL';
-  }
-
-  function appendVaultCard(song) {
-    var card = document.createElement('div');
-    card.className = 'vault-card';
-
-    var name = document.createElement('div');
-    name.className = 'name';
-    name.textContent = song.name.toUpperCase();
-    card.appendChild(name);
-
-    if (song.artist) {
-      var artist = document.createElement('div');
-      artist.className = 'tag';
-      artist.textContent = song.artist;
-      card.appendChild(artist);
-    }
-
-    var actions = document.createElement('div');
-    actions.className = 'card-actions';
-
-    var loadBtn = document.createElement('button');
-    loadBtn.type = 'button';
-    loadBtn.textContent = 'LOAD';
-    loadBtn.addEventListener('click', function () { loadSong(song); });
-    actions.appendChild(loadBtn);
-
-    var queueBtn = document.createElement('button');
-    queueBtn.type = 'button';
-    queueBtn.textContent = 'ADD TO QUEUE';
-    queueBtn.addEventListener('click', function () { addToQueue(song); });
-    actions.appendChild(queueBtn);
-
-    if (song.source === 'cloud') {
-      var editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.textContent = 'EDIT';
-      editBtn.addEventListener('click', function () { enterEditMode(song); });
-      actions.appendChild(editBtn);
-
-      var delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'danger';
-      delBtn.textContent = 'DELETE';
-      delBtn.addEventListener('click', function () {
-        var ok = confirm('Delete ' + song.name + ' from the vault?');
-        if (!ok) return;
-        deleteDoc(doc(db, 'songs', song.id)).catch(function (err) {
-          console.error('Delete failed', err);
-        });
-      });
-      actions.appendChild(delBtn);
-    }
-
-    card.appendChild(actions);
-    dom.vaultList.appendChild(card);
-  }
-
-  function enterEditMode(song) {
-    state.editingSongId = song.id;
-    dom.addName.value = song.name;
-    dom.addArtist.value = song.artist || '';
-    dom.addDrums.value = song.files.drums;
-    dom.addBass.value = song.files.bass;
-    dom.addOther.value = song.files.other;
-    dom.addVocals.value = song.files.vocals;
-    dom.addSongSubmitBtn.textContent = 'UPDATE SONG';
-    dom.cancelEditBtn.hidden = false;
-    dom.addSongForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  function exitEditMode() {
-    state.editingSongId = null;
-    dom.addSongSubmitBtn.textContent = 'SAVE TO VAULT';
-    dom.cancelEditBtn.hidden = true;
-    dom.addSongForm.reset();
-  }
-
-  var QUEUE_KEY = 'belladonna_stem_queue';
-
-  function loadQueueFromStorage() {
-    try {
-      state.queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
-    } catch (e) {
-      state.queue = [];
-    }
-  }
-
-  function saveQueueToStorage() {
-    try {
-      localStorage.setItem(QUEUE_KEY, JSON.stringify(state.queue));
-    } catch (e) {
-      console.error('Could not save queue', e);
-    }
-  }
-
-  function addToQueue(song) {
-    state.queue.push({
-      id: song.id || null,
-      name: song.name,
-      artist: song.artist || '',
-      source: song.source || 'cloud',
-      files: song.files,
-      sequenceOrder: song.sequenceOrder,
-      stepSeconds: song.stepSeconds,
-      startTime: song.startTime
-    });
-    saveQueueToStorage();
-    renderQueue();
-  }
-
-  function removeFromQueue(idx) {
-    state.queue.splice(idx, 1);
-    saveQueueToStorage();
-    renderQueue();
-  }
-
-  function moveQueueItem(fromIdx, toIdx) {
-    var moved = state.queue.splice(fromIdx, 1)[0];
-    state.queue.splice(toIdx, 0, moved);
-    saveQueueToStorage();
-    renderQueue();
-  }
-
-  function renderQueue() {
-    dom.queueList.innerHTML = '';
-    dom.queueEmpty.hidden = state.queue.length > 0;
-
-    state.queue.forEach(function (song, idx) {
-      var li = document.createElement('li');
-      li.className = 'queue-item';
-      li.draggable = true;
-
-      var grip = document.createElement('span');
-      grip.className = 'grip';
-      grip.setAttribute('aria-hidden', 'true');
-      grip.appendChild(document.createElement('span'));
-      grip.appendChild(document.createElement('span'));
-      grip.appendChild(document.createElement('span'));
-
-      var num = document.createElement('span');
-      num.className = 'qi-num';
-      num.textContent = (idx + 1) + '.';
-
-      var name = document.createElement('span');
-      name.className = 'qi-name';
-      name.textContent = song.name.toUpperCase();
-
-      li.appendChild(grip);
-      li.appendChild(num);
-      li.appendChild(name);
-
-      if (song.artist) {
-        var artist = document.createElement('span');
-        artist.className = 'qi-artist';
-        artist.textContent = song.artist;
-        li.appendChild(artist);
-      }
-
-      var actions = document.createElement('span');
-      actions.className = 'qi-actions';
-
-      var loadBtn = document.createElement('button');
-      loadBtn.type = 'button';
-      loadBtn.textContent = 'LOAD';
-      loadBtn.addEventListener('click', function () { loadSong(song); });
-      actions.appendChild(loadBtn);
-
-      var removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.className = 'danger';
-      removeBtn.textContent = 'REMOVE';
-      removeBtn.addEventListener('click', function () { removeFromQueue(idx); });
-      actions.appendChild(removeBtn);
-
-      li.appendChild(actions);
-      dom.queueList.appendChild(li);
-
-      li.addEventListener('dragstart', function (e) {
-        e.dataTransfer.setData('text/plain', String(idx));
-        e.dataTransfer.effectAllowed = 'move';
-        li.classList.add('dragging');
-      });
-      li.addEventListener('dragend', function () { li.classList.remove('dragging'); });
-      li.addEventListener('dragover', function (e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        li.classList.add('drag-over');
-      });
-      li.addEventListener('dragleave', function () { li.classList.remove('drag-over'); });
-      li.addEventListener('drop', function (e) {
-        e.preventDefault();
-        li.classList.remove('drag-over');
-        var fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
-        if (isNaN(fromIdx) || fromIdx === idx) return;
-        moveQueueItem(fromIdx, idx);
-      });
-    });
-  }
-
-  function renderVault(cloudSongs) {
-    dom.vaultList.innerHTML = '';
-    if (!cloudSongs.length) {
-      var empty = document.createElement('div');
-      empty.className = 'mono-hint';
-      empty.textContent = state.vaultSongs.length ? 'NO MATCHES' : 'NO SONGS SAVED YET — ADD ONE BELOW';
-      dom.vaultList.appendChild(empty);
-      return;
-    }
-    cloudSongs.forEach(function (song) { appendVaultCard(song); });
-  }
-
-  function applyVaultFilter() {
-    var q = (dom.vaultSearch.value || '').toLowerCase().trim();
-    var filtered = !q ? state.vaultSongs : state.vaultSongs.filter(function (s) {
-      return (s.name + ' ' + s.artist).toLowerCase().indexOf(q) !== -1;
-    });
-    renderVault(filtered);
-  }
-
-  function showEmptyPlayer() {
-    dom.songTitle.textContent = 'NO SONG LOADED';
-    dom.songArtist.textContent = 'Load one from the Vault below';
-    dom.countdown.textContent = 'LOAD A SONG TO BEGIN';
-    updateExportButtonState();
-  }
-
-  function setSyncState(mode) {
-    dom.syncIndicator.classList.remove('synced', 'error');
-    if (mode === 'synced') {
-      dom.syncIndicator.classList.add('synced');
-      dom.syncLabel.textContent = 'SYNCED';
-    } else if (mode === 'error') {
-      dom.syncIndicator.classList.add('error');
-      dom.syncLabel.textContent = 'OFFLINE';
-    } else {
-      dom.syncLabel.textContent = 'CONNECTING';
-    }
-  }
-
-  function subscribeVault() {
-    var vaultQuery = query(songsCol, orderBy('createdAt', 'desc'));
-    onSnapshot(vaultQuery, function (snapshot) {
-      setSyncState('synced');
-      var cloudSongs = [];
-      snapshot.forEach(function (docSnap) {
-        var data = docSnap.data();
-        cloudSongs.push({
-          id: docSnap.id,
-          name: data.name,
-          artist: data.artist || '',
-          source: 'cloud',
-          files: data.files,
-          sequenceOrder: data.sequenceOrder,
-          stepSeconds: data.stepSeconds,
-          startTime: (typeof data.startTime === 'number') ? data.startTime : null
-        });
-      });
-      state.vaultSongs = cloudSongs;
-      applyVaultFilter();
-    }, function (err) {
-      console.error('Vault sync failed', err);
-      setSyncState('error');
-      state.vaultSongs = [];
-      renderVault([]);
-    });
-  }
-
-  function loadSong(song) {
-    pauseAll();
-    endSequence();
-    state.currentSong = song;
-    state.duration = 0;
-    state.onsetFractions = {};
-    state.analysisFailed = {};
-    state.audioBuffers = {};
-    updateExportButtonState();
-
+  function loadStems(mapped, title, artist) {
+    pauseAll(); endSequence(); (state.urls || []).forEach(function (u) { URL.revokeObjectURL(u); }); state.urls = [];
+    state.token = (state.token || 0) + 1; var token = state.token;
+    state.files = mapped; state.loaded = true; state.duration = 0; state.onsetFractions = {}; state.analysisFailed = {}; state.audioBuffers = {}; state.peaks = {};
     STEMS.forEach(function (stem) {
-      var el = state.audioEls[stem];
-      if (!el) {
-        el = document.createElement('audio');
-        el.preload = 'auto';
-        el.style.display = 'none';
-        document.body.appendChild(el);
-        state.audioEls[stem] = el;
-      }
-      el.src = song.files[stem];
-      el.load();
-      state.channelOn[stem] = true;
+      var el = state.audioEls[stem]; if (!el) { el = document.createElement('audio'); el.preload = 'auto'; el.style.display = 'none'; document.body.appendChild(el); state.audioEls[stem] = el; }
+      var url = URL.createObjectURL(mapped[stem]); state.urls.push(url); el.src = url; el.load(); el.volume = 1; state.channelOn[stem] = true;
     });
-
-    updateChannelClasses();
-
-    state.sequence.order = (song.sequenceOrder && song.sequenceOrder.length === 4) ? song.sequenceOrder.slice() : ['drums', 'bass', 'other', 'vocals'];
-    state.sequence.step = song.stepSeconds || 8;
-    state.sequence.startTime = (typeof song.startTime === 'number') ? song.startTime : null;
-    dom.stepDuration.value = state.sequence.step;
-    dom.startTime.value = state.sequence.startTime != null ? state.sequence.startTime : 0;
-    renderSequenceChips();
-
-    dom.songTitle.textContent = song.name.toUpperCase();
-    dom.songArtist.textContent = song.artist || '';
-    dom.scrubber.value = 0;
-    dom.countdown.textContent = 'PRESS PLAY ALL TO BEGIN THE REVEAL';
-    updatePlayheadPosition(0);
-
-    var refEl = state.audioEls.drums;
-    refEl.addEventListener('loadedmetadata', function onMeta() {
-      state.duration = refEl.duration || 0;
-      dom.timeTotal.textContent = formatTime(state.duration);
-      refEl.removeEventListener('loadedmetadata', onMeta);
-    });
-
-    STEMS.forEach(function (stem) {
-      state.peaks[stem] = null;
-      drawChannel(stem);
-      analyzePeaks(stem, song.files[stem]);
-    });
+    updateChannelClasses(); stemTags(); dom.titleIn.value = title; dom.artistIn.value = artist; syncTitle();
+    var m = state.audioEls.drums; m.addEventListener('loadedmetadata', function f() { if (isFinite(m.duration)) { state.duration = m.duration; dom.timeTotal.textContent = formatTime(state.duration); } m.removeEventListener('loadedmetadata', f); });
+    dom.startTime.value = 0; dom.countdown.textContent = 'PRESS PREVIEW REVEAL TO HEAR IT'; dom.playAllBtn.disabled = false; dom.exportMsg.innerHTML = '&nbsp;';
+    STEMS.forEach(function (s) { drawChannel(s); analyzePeaks(s, state.urls[STEMS.indexOf(s)], token); });
+    updateExportState();
   }
+  function syncTitle() { var t = dom.titleIn.value.trim(), a = dom.artistIn.value.trim(); dom.songTitle.textContent = t ? t.toUpperCase() : (state.loaded ? 'UNTITLED' : 'NO SONG LOADED'); dom.songArtist.textContent = state.loaded ? a : 'Load the stems above'; }
 
-  function handleFileSelection(files) {
-    var mapped = { drums: null, bass: null, other: null, vocals: null };
-    var unmatched = [];
-
-    files.forEach(function (file) {
-      var lower = file.name.toLowerCase();
-      if (lower.indexOf('vocal') !== -1) mapped.vocals = file;
-      else if (lower.indexOf('drum') !== -1) mapped.drums = file;
-      else if (lower.indexOf('bass') !== -1) mapped.bass = file;
-      else if (lower.indexOf('back') !== -1 || lower.indexOf('other') !== -1 || lower.indexOf('instrument') !== -1) mapped.other = file;
-      else unmatched.push(file);
-    });
-
-    STEMS.forEach(function (stem) {
-      if (!mapped[stem] && unmatched.length) mapped[stem] = unmatched.shift();
-    });
-
-    var missing = STEMS.filter(function (stem) { return !mapped[stem]; });
-    if (missing.length) {
-      var missingLabels = missing.map(function (s) { return STEM_LABELS[s]; }).join(', ');
-      alert('Could not match a file to: ' + missingLabels + '. Select exactly 4 files, one per stem.');
-      return;
-    }
-
-    var rawName = files[0].name.replace(/\.[^/.]+$/, '');
-    var cleanName = rawName
-      .replace(/[-_]?(vocals?|drums?|bass|other|backing|instrumental)/ig, '')
-      .replace(/[-_]+/g, ' ')
-      .trim() || 'Untitled';
-
-    var newSong = {
-      name: cleanName,
-      artist: '',
-      source: 'blob',
-      files: {
-        drums: URL.createObjectURL(mapped.drums),
-        bass: URL.createObjectURL(mapped.bass),
-        other: URL.createObjectURL(mapped.other),
-        vocals: URL.createObjectURL(mapped.vocals)
-      }
-    };
-
-    loadSong(newSong);
+  /* ── making the MP3 ── */
+  function floatTo16(f) { var o = new Int16Array(f.length); for (var i = 0; i < f.length; i++) { var s = Math.max(-1, Math.min(1, f[i])); o[i] = s < 0 ? s * 0x8000 : s * 0x7FFF; } return o; }
+  function encodeMp3(ab) {
+    var ch = ab.numberOfChannels >= 2 ? 2 : 1, enc = new lamejs.Mp3Encoder(ch, ab.sampleRate, 160), L = floatTo16(ab.getChannelData(0)), R = ch === 2 ? floatTo16(ab.getChannelData(1)) : null, out = [];
+    for (var i = 0; i < L.length; i += 1152) { var b = ch === 2 ? enc.encodeBuffer(L.subarray(i, i + 1152), R.subarray(i, i + 1152)) : enc.encodeBuffer(L.subarray(i, i + 1152)); if (b.length) out.push(b); }
+    var e = enc.flush(); if (e.length) out.push(e); return out;
   }
-
-  function resizeAllCanvases() {
-    STEMS.forEach(function (stem) {
-      var canvas = state.canvases[stem];
-      if (canvas) {
-        sizeCanvas(canvas);
-        drawChannel(stem);
-      }
-    });
-    var d = state.duration || 0;
-    var frac = d ? (getCurrentTime() / d) : 0;
-    updatePlayheadPosition(frac);
+  // ID3v2.4 tag: title, artist, and the reveal timing (order + seconds per part) for the Moth game hub
+  function id3(title, artist, seq) {
+    var u8 = function (s) { return Array.from(new TextEncoder().encode(s)); }, ss = function (n) { return [(n >> 21) & 127, (n >> 14) & 127, (n >> 7) & 127, n & 127]; };
+    var frame = function (id, body) { return u8(id).concat(ss(body.length), [0, 0], body); };
+    var frames = []; if (title) frames = frames.concat(frame('TIT2', [3].concat(u8(title)))); if (artist) frames = frames.concat(frame('TPE1', [3].concat(u8(artist))));
+    frames = frames.concat(frame('TXXX', [3].concat(u8('DISTILL'), [0], u8(JSON.stringify(seq)))));
+    return new Uint8Array(u8('ID3').concat([4, 0, 0], ss(frames.length), frames));
   }
-
-  function floatTo16BitPCM(floatArray) {
-    var out = new Int16Array(floatArray.length);
-    for (var i = 0; i < floatArray.length; i++) {
-      var s = Math.max(-1, Math.min(1, floatArray[i]));
-      out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+  function cleanName(s) { return s.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  async function createMp3() {
+    if (!state.loaded || state.rendering) return;
+    if (typeof lamejs === 'undefined') { alert('The MP3 encoder did not load. Check your connection and reload the page.'); return; }
+    if (!STEMS.every(function (s) { return state.audioBuffers[s]; })) { alert('Still analyzing the audio — wait a moment and try again.'); return; }
+    var title = dom.titleIn.value.trim(), artist = dom.artistIn.value.trim();
+    if (!title) { alert('Type the song title first.'); dom.titleIn.focus(); return; }
+    var order = state.sequence.order.slice(), step = parseInt(dom.stepDuration.value, 10) || 8; state.sequence.step = step;
+    var startAt = Math.max(0, Math.min(startAtSeconds(), state.duration - 0.5)), len = Math.max(1, state.duration - startAt);
+    if (len < step * 4 + 1 && !confirm('Only ' + Math.floor(len) + 's of the song is left after the start point, but 4 parts of ' + step + 's need ' + (step * 4) + 's. The last stem(s) will barely play. Create it anyway?')) return;
+    var fname = cleanName((artist ? artist + ' - ' : '') + title) + '.mp3', handle = null;
+    if (window.showSaveFilePicker) {   // pick the distill folder right away (the browser only allows this straight after a click)
+      try { handle = await window.showSaveFilePicker({ suggestedName: fname, types: [{ description: 'MP3 audio', accept: { 'audio/mpeg': ['.mp3'] } }] }); }
+      catch (e) { if (e && e.name === 'AbortError') return; handle = null; }
     }
-    return out;
-  }
-
-  function encodeMp3(audioBuffer) {
-    var channels = audioBuffer.numberOfChannels >= 2 ? 2 : 1;
-    var sampleRate = audioBuffer.sampleRate;
-    var encoder = new lamejs.Mp3Encoder(channels, sampleRate, 160);
-    var blockSize = 1152;
-    var left = floatTo16BitPCM(audioBuffer.getChannelData(0));
-    var right = channels === 2 ? floatTo16BitPCM(audioBuffer.getChannelData(1)) : null;
-    var mp3Data = [];
-    for (var i = 0; i < left.length; i += blockSize) {
-      var leftChunk = left.subarray(i, i + blockSize);
-      var mp3buf;
-      if (channels === 2) {
-        var rightChunk = right.subarray(i, i + blockSize);
-        mp3buf = encoder.encodeBuffer(leftChunk, rightChunk);
-      } else {
-        mp3buf = encoder.encodeBuffer(leftChunk);
-      }
-      if (mp3buf.length > 0) mp3Data.push(mp3buf);
-    }
-    var endBuf = encoder.flush();
-    if (endBuf.length > 0) mp3Data.push(endBuf);
-    return new Blob(mp3Data, { type: 'audio/mpeg' });
-  }
-
-  function exportMp3() {
-    if (!state.currentSong) {
-      alert('Load a song first.');
-      return;
-    }
-    var missing = STEMS.filter(function (s) { return !state.audioBuffers[s]; });
-    if (missing.length) {
-      alert('Still analyzing audio — wait a moment and try again.');
-      return;
-    }
-    if (typeof lamejs === 'undefined') {
-      alert('The mp3 encoder did not load. Check your connection and try again.');
-      return;
-    }
-
-    dom.exportMp3Btn.disabled = true;
-    dom.exportMp3Btn.textContent = 'RENDERING…';
-
-    var startAt = state.sequence.startTime != null ? state.sequence.startTime : (state.onsetFractions[state.sequence.order[0]] || 0) * state.duration;
-    startAt = Math.max(0, Math.min(startAt, state.duration - 0.5));
-    var renderDuration = Math.max(1, state.duration - startAt);
-    var sampleRate = state.audioBuffers.drums.sampleRate;
-    var order = state.sequence.order;
-    var step = state.sequence.step;
-
-    setTimeout(function () {
+    state.rendering = true; dom.exportMp3Btn.disabled = true; dom.exportMp3Btn.textContent = 'RENDERING…'; dom.exportMsg.innerHTML = '&nbsp;';
+    setTimeout(async function () {
       try {
-        var offlineCtx = new OfflineAudioContext(2, Math.ceil(renderDuration * sampleRate), sampleRate);
+        var sr = state.audioBuffers.drums.sampleRate, oc = new OfflineAudioContext(2, Math.ceil(len * sr), sr);
         STEMS.forEach(function (stem) {
-          var src = offlineCtx.createBufferSource();
-          src.buffer = state.audioBuffers[stem];
-          var gainNode = offlineCtx.createGain();
-          var entryIndex = order.indexOf(stem);
-          var entryTime = entryIndex >= 0 ? Math.min(entryIndex * step, renderDuration) : 0;
-          gainNode.gain.setValueAtTime(0, 0);
-          gainNode.gain.setValueAtTime(0, entryTime);
-          gainNode.gain.linearRampToValueAtTime(1, Math.min(entryTime + 0.05, renderDuration));
-          src.connect(gainNode);
-          gainNode.connect(offlineCtx.destination);
-          src.start(0, startAt);
+          var src = oc.createBufferSource(); src.buffer = state.audioBuffers[stem]; var g = oc.createGain(), t = Math.min(Math.max(0, order.indexOf(stem)) * step, len);
+          g.gain.setValueAtTime(0, 0); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, Math.min(t + 0.05, len)); src.connect(g); g.connect(oc.destination); src.start(0, startAt);
         });
-
-        offlineCtx.startRendering().then(function (rendered) {
-          var blob = encodeMp3(rendered);
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = state.currentSong.name.replace(/[^a-z0-9]+/ig, '-') + '-reveal.mp3';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
-          dom.exportMp3Btn.disabled = false;
-          dom.exportMp3Btn.textContent = 'DOWNLOAD MP3';
-        }).catch(function (err) {
-          console.error('Render failed', err);
-          alert('Could not render the mp3: ' + err.message);
-          dom.exportMp3Btn.disabled = false;
-          dom.exportMp3Btn.textContent = 'DOWNLOAD MP3';
-        });
-      } catch (err) {
-        console.error('Export failed', err);
-        alert('Could not export the mp3: ' + err.message);
-        dom.exportMp3Btn.disabled = false;
-        dom.exportMp3Btn.textContent = 'DOWNLOAD MP3';
-      }
+        var parts = encodeMp3(await oc.startRendering()), blob = new Blob([id3(title, artist, { v: 1, order: order, step: step })].concat(parts), { type: 'audio/mpeg' });
+        if (handle) { var w = await handle.createWritable(); await w.write(blob); await w.close(); dom.exportMsg.textContent = 'SAVED ' + handle.name.toUpperCase(); }
+        else { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fname; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000); dom.exportMsg.textContent = 'DOWNLOADED ' + fname.toUpperCase() + ' — MOVE IT INTO YOUR MUSIC FOLDER → DISTILL'; }
+      } catch (err) { console.error(err); alert('Could not create the MP3: ' + err.message); }
+      state.rendering = false; updateExportState();
     }, 30);
   }
 
   function init() {
-    dom.masterPlay = document.getElementById('masterPlay');
-    dom.scrubber = document.getElementById('scrubber');
-    dom.timeCurrent = document.getElementById('timeCurrent');
-    dom.timeTotal = document.getElementById('timeTotal');
-    dom.channelsWrap = document.getElementById('channelsWrap');
-    dom.playhead = document.getElementById('playhead');
-    dom.songTitle = document.getElementById('songTitle');
-    dom.songArtist = document.getElementById('songArtist');
-    dom.stepDuration = document.getElementById('stepDuration');
-    dom.startTime = document.getElementById('startTime');
-    dom.exportMp3Btn = document.getElementById('exportMp3Btn');
-    dom.playAllBtn = document.getElementById('playAllBtn');
-    dom.stopSeqBtn = document.getElementById('stopSeqBtn');
-    dom.sequenceOrder = document.getElementById('sequenceOrder');
-    dom.countdown = document.getElementById('countdown');
-    dom.loadSongBtn = document.getElementById('loadSongBtn');
-    dom.fileInput = document.getElementById('fileInput');
-    dom.vaultList = document.getElementById('vaultList');
-    dom.vaultSearch = document.getElementById('vaultSearch');
-    dom.queueList = document.getElementById('queueList');
-    dom.queueEmpty = document.getElementById('queueEmpty');
-    dom.clearQueueBtn = document.getElementById('clearQueueBtn');
-    dom.addSongForm = document.getElementById('addSongForm');
-    dom.addName = document.getElementById('addName');
-    dom.addArtist = document.getElementById('addArtist');
-    dom.addDrums = document.getElementById('addDrums');
-    dom.addBass = document.getElementById('addBass');
-    dom.addOther = document.getElementById('addOther');
-    dom.addVocals = document.getElementById('addVocals');
-    dom.addSongSubmitBtn = document.getElementById('addSongSubmitBtn');
-    dom.cancelEditBtn = document.getElementById('cancelEditBtn');
-    dom.syncIndicator = document.getElementById('syncIndicator');
-    dom.syncDot = document.getElementById('syncDot');
-    dom.syncLabel = document.getElementById('syncLabel');
-
-    STEMS.forEach(function (stem) {
-      state.channelRows[stem] = document.querySelector('.channel[data-stem="' + stem + '"]');
-      state.canvases[stem] = document.querySelector('.channel-canvas[data-stem="' + stem + '"]');
-      sizeCanvas(state.canvases[stem]);
-    });
-
-    document.querySelectorAll('.channel-toggle').forEach(function (btn) {
-      btn.addEventListener('click', function () { toggleChannel(btn.dataset.stem); });
-    });
-
-    dom.masterPlay.addEventListener('click', function () {
-      var anyOn = STEMS.some(function (s) { return state.channelOn[s]; });
-      if (!anyOn) STEMS.forEach(function (s) { setChannelVolume(s, true); });
-      togglePlayPause();
-    });
-
-    dom.scrubber.addEventListener('input', function () {
-      var frac = dom.scrubber.value / 1000;
-      seekAll(frac * state.duration);
-    });
-
-    dom.playAllBtn.addEventListener('click', startSequence);
-    dom.stopSeqBtn.addEventListener('click', stopSequence);
-
-    dom.stepDuration.addEventListener('change', function () {
-      state.sequence.step = parseInt(dom.stepDuration.value, 10) || 8;
-      persistSequenceSettings();
-    });
-
-    dom.startTime.addEventListener('change', function () {
-      var val = parseFloat(dom.startTime.value);
-      state.sequence.startTime = isNaN(val) ? 0 : Math.max(0, val);
-      persistSequenceSettings();
-    });
-
-    dom.exportMp3Btn.addEventListener('click', exportMp3);
-
-    dom.clearQueueBtn.addEventListener('click', function () {
-      if (!state.queue.length) return;
-      if (!confirm('Clear the whole queue?')) return;
-      state.queue = [];
-      saveQueueToStorage();
-      renderQueue();
-    });
-
-    dom.vaultSearch.addEventListener('input', applyVaultFilter);
-
+    ['masterPlay', 'scrubber', 'timeCurrent', 'timeTotal', 'channelsWrap', 'playhead', 'songTitle', 'songArtist', 'stepDuration', 'startTime', 'exportMp3Btn', 'playAllBtn', 'stopSeqBtn', 'sequenceOrder', 'countdown', 'loadSongBtn', 'fileInput', 'titleIn', 'artistIn', 'stemList', 'exportMsg', 'loader'].forEach(function (id) { dom[id] = $(id); });
+    STEMS.forEach(function (s) { state.channelRows[s] = document.querySelector('.channel[data-stem="' + s + '"]'); state.canvases[s] = document.querySelector('.channel-canvas[data-stem="' + s + '"]'); sizeCanvas(state.canvases[s]); });
+    document.querySelectorAll('.channel-toggle').forEach(function (b) { b.addEventListener('click', function () { toggleChannel(b.dataset.stem); }); });
+    dom.masterPlay.addEventListener('click', function () { if (!state.loaded) return; if (!STEMS.some(function (s) { return state.channelOn[s]; })) STEMS.forEach(function (s) { setChannelVolume(s, true); }); state.isPlaying ? pauseAll() : playAll(); });
+    dom.scrubber.addEventListener('input', function () { seekAll(dom.scrubber.value / 1000 * state.duration); });
+    dom.playAllBtn.addEventListener('click', startSequence); dom.stopSeqBtn.addEventListener('click', stopSequence); dom.playAllBtn.disabled = true;
+    dom.stepDuration.addEventListener('change', function () { state.sequence.step = parseInt(dom.stepDuration.value, 10) || 8; });
+    dom.exportMp3Btn.addEventListener('click', createMp3);
+    dom.titleIn.addEventListener('input', syncTitle); dom.artistIn.addEventListener('input', syncTitle);
     dom.loadSongBtn.addEventListener('click', function () { dom.fileInput.click(); });
-    dom.fileInput.addEventListener('change', function () {
-      var files = Array.prototype.slice.call(dom.fileInput.files);
-      if (files.length) handleFileSelection(files);
-      dom.fileInput.value = '';
-    });
-    dom.addSongForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var name = dom.addName.value.trim();
-      var artist = dom.addArtist.value.trim();
-      var drums = dom.addDrums.value.trim();
-      var bass = dom.addBass.value.trim();
-      var other = dom.addOther.value.trim();
-      var vocals = dom.addVocals.value.trim();
-      if (!name || !drums || !bass || !other || !vocals) return;
-
-      var payload = {
-        name: name,
-        artist: artist,
-        files: { drums: drums, bass: bass, other: other, vocals: vocals }
-      };
-
-      var savePromise;
-      if (state.editingSongId) {
-        savePromise = updateDoc(doc(db, 'songs', state.editingSongId), payload);
-      } else {
-        payload.createdAt = serverTimestamp();
-        savePromise = addDoc(songsCol, payload);
-      }
-
-      savePromise.then(function () {
-        exitEditMode();
-      }).catch(function (err) {
-        console.error('Failed to save song', err);
-        alert('Could not save to the vault: ' + err.message);
-      });
-    });
-    dom.cancelEditBtn.addEventListener('click', exitEditMode);
-
-    var resizeTimer = null;
-    window.addEventListener('resize', function () {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(resizeAllCanvases, 150);
-    });
-
-    renderSequenceChips();
-    loadQueueFromStorage();
-    renderQueue();
-    showEmptyPlayer();
-    subscribeVault();
+    dom.fileInput.addEventListener('change', function () { var f = Array.prototype.slice.call(dom.fileInput.files); if (f.length) handleFiles(f); dom.fileInput.value = ''; });
+    ['dragenter', 'dragover'].forEach(function (ev) { dom.loader.addEventListener(ev, function (e) { e.preventDefault(); dom.loader.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { dom.loader.addEventListener(ev, function (e) { e.preventDefault(); dom.loader.classList.remove('drag'); }); });
+    dom.loader.addEventListener('drop', function (e) { var f = Array.prototype.slice.call(e.dataTransfer.files || []).filter(function (x) { return /^audio\//.test(x.type) || /\.(mp3|wav|flac|m4a|aac|ogg)$/i.test(x.name); }); if (f.length) handleFiles(f); });
+    var rt = null; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(function () { STEMS.forEach(function (s) { sizeCanvas(state.canvases[s]); drawChannel(s); }); updatePlayhead(state.duration ? getCurrentTime() / state.duration : 0); }, 150); });
+    renderChips(); stemTags(); updateExportState();
   }
-
   init();
+})();
 </script>
 </body>
 </html>
