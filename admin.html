@@ -61,7 +61,7 @@ label.l{display:block;font-family:var(--cinzel);font-size:10px;letter-spacing:.1
 
 <div id="app" style="display:none">
 <header>
-  <img src="logo.png" onerror="this.onerror=null;this.src='moth.png'" alt=""><div class="logo">BELLADONNA MOTH<small>PLAYLIST ADMIN</small></div>
+  <img src="logo.png" onerror="this.onerror=null;this.src='moth.png'" alt=""><div class="logo">BELLADONNA MOTH<small>ADMIN</small></div>
   <div class="sp"></div><span class="who" id="who"></span><button class="btn sm" id="out">Sign out</button>
 </header>
 <main>
@@ -69,6 +69,18 @@ label.l{display:block;font-family:var(--cinzel);font-size:10px;letter-spacing:.1
     <div class="pb" id="list"></div></section>
   <section class="panel"><div class="ph"><span id="edTitle">Playlist</span><span class="sp"></span><span class="dirty" id="dirty"></span></div>
     <div class="pb" id="ed"></div></section>
+</main>
+<main id="vmain">
+  <section class="panel"><div class="ph"><span>Crowd Vote lists</span><span class="sp"></span><button class="btn sm gold" id="newVl">+ New</button></div>
+    <div class="pb" id="vlist"></div></section>
+  <section class="panel"><div class="ph"><span id="vTitle">Vote list</span><span class="sp"></span><span class="dirty" id="vdirty"></span></div>
+    <div class="pb" id="ved"></div></section>
+</main>
+<main id="dmain">
+  <section class="panel"><div class="ph"><span>Distill lists</span><span class="sp"></span><button class="btn sm gold" id="newDl">+ New</button></div>
+    <div class="pb"><a class="btn gold" style="display:block;text-align:center;text-decoration:none;margin-bottom:12px" href="https://belladonnanights.github.io/belladonna-moth/distill-creator.html" target="_blank" rel="noopener">Open the Distill Creator ↗</a><div id="dlist"></div></div></section>
+  <section class="panel"><div class="ph"><span id="dTitle">Distill list</span><span class="sp"></span><span class="dirty" id="ddirty"></span></div>
+    <div class="pb" id="ded"></div></section>
 </main>
 </div>
 <div id="toast"></div>
@@ -91,7 +103,7 @@ onAuthStateChanged(auth, u => { const ok = !!u && !u.isAnonymous; $('#gate').sty
 
 /* ── data ── */
 let PL = {}, cur = null, draft = null, dirty = false, started = false;
-function start(){ if (started) return; started = true; onValue(ref(db,'moth/playlists'), s => { PL = s.val() || {}; renderList(); if (cur && !dirty) { if (PL[cur]) load(cur, true); else { cur = null; draft = null; renderEd(); } } }); renderEd(); }
+function start(){ if (started) return; started = true; vstart(); dstart(); onValue(ref(db,'moth/playlists'), s => { PL = s.val() || {}; renderList(); if (cur && !dirty) { if (PL[cur]) load(cur, true); else { cur = null; draft = null; renderEd(); } } }); renderEd(); }
 const songsOf = p => (Array.isArray(p.songs) ? p.songs : Object.values(p.songs || {})).map(s => ({ title: s.title || '', artist: s.artist || '' }));
 function renderList(){
   const ids = Object.keys(PL).sort((a,b)=>String(PL[a].name).localeCompare(String(PL[b].name)));
@@ -148,5 +160,91 @@ ed.addEventListener('click', async e => {
   if (b.id==='del') { if (!confirm('Delete “'+(draft.name||'this playlist')+'” for everyone?')) return;
     try { if (PL[cur]) await remove(ref(db,'moth/playlists/'+cur)); cur=null; draft=null; dirty=false; renderList(); renderEd(); toast('Playlist deleted'); } catch(err) { $('#serr').textContent = err.message; } }
 });
-window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue=''; } });
+
+/* ── Crowd Vote lists (moth/votelists) — the Moth host app loads these into its “Saved votes” menu ── */
+let VL = {}, vcur = null, vdraft = null, vdirty = false;
+const optsOf = v => (Array.isArray(v.options) ? v.options : Object.values(v.options || {})).map(x => String(x == null ? '' : x));
+function vstart(){ onValue(ref(db,'moth/votelists'), s => { VL = s.val() || {}; vList(); if (vcur && !vdirty) { if (VL[vcur]) vLoad(vcur); else { vcur = null; vdraft = null; vEd(); } } }); vEd(); }
+function vList(){
+  const ids = Object.keys(VL).sort((a,b)=>String(VL[a].name).localeCompare(String(VL[b].name)));
+  $('#vlist').innerHTML = ids.length ? ids.map(id=>'<div class="pl'+(id===vcur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(VL[id].name||'Untitled')+'</span><span class="c">'+optsOf(VL[id]).length+' options</span></div>').join('') : '<div class="empty">No vote lists yet.<br>Press <b>+ New</b> to make the first one.</div>';
+}
+$('#vlist').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r) return; if (vdirty && !confirm('You have unsaved changes to this vote list. Switch anyway?')) return; vLoad(r.dataset.id); });
+$('#newVl').onclick = () => { if (vdirty && !confirm('You have unsaved changes to this vote list. Start a new one anyway?')) return; vcur = push(ref(db,'moth/votelists')).key; vdraft = { name:'', question:'', text:'' }; vdirty = true; vList(); vEd(); setTimeout(()=>$('#vnm')&&$('#vnm').focus(),30); };
+function vLoad(id){ vcur = id; vdraft = { name: VL[id].name || '', question: VL[id].question || '', text: optsOf(VL[id]).join('\n') }; vdirty = false; vList(); vEd(); }
+const vLines = t => t.split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+function vCount(){ const n = vLines(vdraft.text).length, c = $('#vcnt'); if (c) { c.textContent = '('+n+' of 2–6)'; c.style.color = (n>=2&&n<=6) ? 'var(--gold2)' : 'var(--red)'; } }
+function vEd(){
+  const box = $('#ved');
+  if (!vdraft) { $('#vTitle').textContent='Vote list'; $('#vdirty').textContent=''; box.innerHTML='<div class="empty">Pick a vote list on the left, or press <b>+ New</b>.<br>A vote list is a question plus 2–6 choices — like “Which decade next?” or your costume contest entries.</div>'; return; }
+  $('#vTitle').textContent = vdraft.name || 'New vote list'; $('#vdirty').textContent = vdirty ? 'Unsaved changes' : '';
+  box.innerHTML =
+   '<label class="l" style="margin-top:0">List name (what the host sees in the menu)</label><input type="text" id="vnm" maxlength="60" placeholder="e.g. Halloween costume contest" value="'+esc(vdraft.name)+'">'
+  +'<label class="l">Question shown on the TV (optional)</label><input type="text" id="vq" maxlength="80" placeholder="e.g. Which costume wins?" value="'+esc(vdraft.question)+'">'
+  +'<label class="l">Options — one per line <span id="vcnt"></span></label><textarea id="vopts" placeholder="80s&#10;90s&#10;2000s&#10;2010s">'+esc(vdraft.text)+'</textarea>'
+  +'<p class="hint" style="margin-top:6px">2 to 6 options, up to 40 letters each — the vote screen on the TV and phones has room for six.</p>'
+  +'<div class="bar" style="margin-top:14px"><button class="btn gold" id="vsave">Save vote list</button><span class="sp"></span><button class="btn danger" id="vdel">Delete list</button></div>'
+  +'<div class="err" id="verr"></div><p class="hint" style="margin-top:6px">Saved lists show up under “Lists from Admin” in the Moth host app’s Crowd Vote screen — it checks for new ones every time you open Crowd Vote.</p>';
+  vCount();
+}
+$('#ved').addEventListener('input', e => { if (!vdraft) return;
+  if (e.target.id==='vnm') { vdraft.name = e.target.value; $('#vTitle').textContent = vdraft.name || 'New vote list'; }
+  else if (e.target.id==='vq') vdraft.question = e.target.value;
+  else if (e.target.id==='vopts') { vdraft.text = e.target.value; vCount(); }
+  else return;
+  vdirty = true; $('#vdirty').textContent = 'Unsaved changes'; });
+$('#ved').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !vdraft) return;
+  if (b.id==='vsave') {
+    const name = (vdraft.name||'').trim(), question = (vdraft.question||'').replace(/\s+/g,' ').trim(), options = vLines(vdraft.text);
+    if (!name) { $('#verr').textContent='Give the list a name first.'; return; }
+    if (options.length < 2 || options.length > 6) { $('#verr').textContent='A vote needs 2 to 6 options — you have '+options.length+'.'; return; }
+    if (options.some(o=>o.length>40)) { $('#verr').textContent='Each option can be up to 40 letters. Shorten the long ones.'; return; }
+    try { await set(ref(db,'moth/votelists/'+vcur), { name, question, options, updatedAt: serverTimestamp() }); vdirty=false; vdraft.name=name; vdraft.question=question; vdraft.text=options.join('\n'); vEd(); toast('Saved “'+name+'”'); }
+    catch(err) { $('#verr').textContent = /permission/i.test(err.message) ? 'Firebase said no — add the moth/votelists rule (admins can write) and check your login is in the admins list.' : (err.message||'Could not save'); }
+  }
+  if (b.id==='vdel') { if (!confirm('Delete “'+(vdraft.name||'this list')+'” for everyone?')) return;
+    try { if (VL[vcur]) await remove(ref(db,'moth/votelists/'+vcur)); vcur=null; vdraft=null; vdirty=false; vList(); vEd(); toast('Vote list deleted'); } catch(err) { $('#verr').textContent = err.message; } }
+});
+/* ── Distill lists (moth/distilllists) — songs whose reveal MP3s (made in the Distill Creator) sit in the host's Music folder → distill ── */
+let DLs = {}, dcur = null, ddraft = null, ddirty = false;
+function dstart(){ onValue(ref(db,'moth/distilllists'), s => { DLs = s.val() || {}; dListR(); if (dcur && !ddirty) { if (DLs[dcur]) dLoad(dcur); else { dcur = null; ddraft = null; dEd(); } } }); dEd(); }
+function dListR(){
+  const ids = Object.keys(DLs).sort((a,b)=>String(DLs[a].name).localeCompare(String(DLs[b].name)));
+  $('#dlist').innerHTML = ids.length ? ids.map(id=>'<div class="pl'+(id===dcur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(DLs[id].name||'Untitled')+'</span><span class="c">'+songsOf(DLs[id]).length+' songs</span></div>').join('') : '<div class="empty">No Distill lists yet.<br>Press <b>+ New</b> to make the first one.</div>';
+}
+$('#dlist').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r) return; if (ddirty && !confirm('You have unsaved changes to this Distill list. Switch anyway?')) return; dLoad(r.dataset.id); });
+$('#newDl').onclick = () => { if (ddirty && !confirm('You have unsaved changes to this Distill list. Start a new one anyway?')) return; dcur = push(ref(db,'moth/distilllists')).key; ddraft = { name:'', text:'' }; ddirty = true; dListR(); dEd(); setTimeout(()=>$('#dnm')&&$('#dnm').focus(),30); };
+function dLoad(id){ dcur = id; ddraft = { name: DLs[id].name || '', text: songsOf(DLs[id]).map(s=>s.title+(s.artist?' - '+s.artist:'')).join('\n') }; ddirty = false; dListR(); dEd(); }
+function dCount(){ const n = parseLines(ddraft.text).length, c = $('#dcnt'); if (c) c.textContent = '('+n+' song'+(n===1?'':'s')+')'; }
+function dEd(){
+  const box = $('#ded');
+  if (!ddraft) { $('#dTitle').textContent='Distill list'; $('#ddirty').textContent=''; box.innerHTML='<div class="empty">Pick a Distill list on the left, or press <b>+ New</b>.<br>A Distill list is the order you’ll play your reveal tracks in — the host app finds each one in its Music folder → <b>distill</b>.</div>'; return; }
+  $('#dTitle').textContent = ddraft.name || 'New Distill list'; $('#ddirty').textContent = ddirty ? 'Unsaved changes' : '';
+  box.innerHTML =
+   '<label class="l" style="margin-top:0">List name (what the host sees in the menu)</label><input type="text" id="dnm" maxlength="60" placeholder="e.g. 80s Distill night" value="'+esc(ddraft.name)+'">'
+  +'<label class="l">Songs — one per line, as <b style="color:var(--gold2)">Song - Artist</b> <span id="dcnt"></span></label><textarea id="dsongs" style="min-height:220px" placeholder="Bohemian Rhapsody - Queen&#10;Waterloo - ABBA&#10;Don\'t Stop Believin\' - Journey">'+esc(ddraft.text)+'</textarea>'
+  +'<p class="hint" style="margin-top:6px">The order you type is the order they appear in the Moth game hub. Tip: you can paste two columns straight from a spreadsheet.</p>'
+  +'<div class="bar" style="margin-top:14px"><button class="btn gold" id="dsave">Save Distill list</button><a class="btn" style="text-decoration:none" href="https://belladonnanights.github.io/belladonna-moth/distill-creator.html" target="_blank" rel="noopener">Make a reveal track ↗</a><span class="sp"></span><button class="btn danger" id="ddel">Delete list</button></div>'
+  +'<div class="err" id="derr"></div><p class="hint" style="margin-top:6px">Save each reveal MP3 from the Distill Creator into your Music folder → <b>distill</b>. The Moth host app matches each line here to a file by song and artist name, and checks for new lists every time you open Distill.</p>';
+  dCount();
+}
+$('#ded').addEventListener('input', e => { if (!ddraft) return;
+  if (e.target.id==='dnm') { ddraft.name = e.target.value; $('#dTitle').textContent = ddraft.name || 'New Distill list'; }
+  else if (e.target.id==='dsongs') { ddraft.text = e.target.value; dCount(); }
+  else return;
+  ddirty = true; $('#ddirty').textContent = 'Unsaved changes'; });
+$('#ded').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !ddraft) return;
+  if (b.id==='dsave') {
+    const name = (ddraft.name||'').trim(), songs = parseLines(ddraft.text).filter(s=>s.title);
+    if (!name) { $('#derr').textContent='Give the list a name first.'; return; }
+    if (!songs.length) { $('#derr').textContent='Add at least one song.'; return; }
+    try { await set(ref(db,'moth/distilllists/'+dcur), { name, songs, count: songs.length, updatedAt: serverTimestamp() }); ddirty=false; ddraft.name=name; ddraft.text=songs.map(s=>s.title+(s.artist?' - '+s.artist:'')).join('\n'); dEd(); toast('Saved “'+name+'”'); }
+    catch(err) { $('#derr').textContent = /permission/i.test(err.message) ? 'Firebase said no — add the moth/distilllists rule (admins can write) and check your login is in the admins list.' : (err.message||'Could not save'); }
+  }
+  if (b.id==='ddel') { if (!confirm('Delete “'+(ddraft.name||'this list')+'” for everyone?')) return;
+    try { if (DLs[dcur]) await remove(ref(db,'moth/distilllists/'+dcur)); dcur=null; ddraft=null; ddirty=false; dListR(); dEd(); toast('Distill list deleted'); } catch(err) { $('#derr').textContent = err.message; } }
+});
+window.addEventListener('beforeunload', e => { if (dirty || vdirty || ddirty) { e.preventDefault(); e.returnValue=''; } });
 </script></body></html>
