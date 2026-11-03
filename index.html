@@ -81,7 +81,7 @@ body.glow::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:5
 #flash{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .5s}
 #conn{position:fixed;left:0;right:0;top:0;background:#7a1e1e;color:#fff;text-align:center;padding:6px;font-size:13px;display:none;z-index:9}
 </style></head><body>
-<div id="conn">Reconnecting…</div><div id="flash"></div><div id="ver" style="position:fixed;bottom:3px;left:0;right:0;text-align:center;font-size:10px;color:#4a4338;pointer-events:none">v4</div>
+<div id="conn">Reconnecting…</div><div id="flash"></div><div id="ver" style="position:fixed;bottom:3px;left:0;right:0;text-align:center;font-size:10px;color:#4a4338;pointer-events:none">v5</div>
 <header><div class="brand" id="gname">Belladonna Moth</div></header>
 <div class="me" id="me" style="display:none"><span id="myname"></span><span class="score" id="myscore">0</span></div>
 <main>
@@ -256,12 +256,14 @@ function altRender(md,entered,myVote){
     else if(t.state==='done') h=M+'<div class="t">'+t.landed+'</div><div class="s">'+(t.win==='tie'?'The wheel landed here — still a tie!':'<b>'+esc(t.win==='A'?(t.an||'Player A'):(t.bn||'Player B'))+'</b> wins the tiebreaker')+'</div>';
     else h=M+'<div class="t">Tiebreaker</div><div class="s">Hang tight — the host is getting ready.</div>';
   } else if(md==='seek'){
-    const k=st.seek||{state:'idle'}, mine=mySeekFor(k.id), me=MYID(), res=(k.results||[]).find(x=>x.id===me);
+    const k=st.seek||{state:'idle'}, qs=k.questions||[], mine=mySeekNow(k), me=MYID(), res=(k.results||[]).find(x=>x.id===me), many=qs.length>1;
     seekStamp={at:Date.now(),left:k.left||0};
-    if(k.state==='live') h=(k.question?'<div class="sq">'+esc(k.question)+'</div>':'')+'<div class="sct" data-seekleft="1"></div><input class="snum" id="sknum" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="'+(mine==null?'':esc(mine))+'"><button class="sbtn" data-act="seek">'+(mine==null?'SEND':'UPDATE')+'</button><div class="s" id="skerr">'+(mine==null?'Count what the question asks and type your number.':'Answer sent: <b style="color:var(--gold2)">'+esc(mine)+'</b> — you can change it until time is up.')+'</div>';
-    else if(k.state==='closed') h=M+'<div class="t">Time\'s up!</div><div class="s">'+(mine==null?'No answer sent.':'Your answer: <b style="color:var(--gold2)">'+esc(mine)+'</b>')+'<br>Eyes on the big screen.</div>';
-    else if(k.state==='revealed') h=(k.question?'<div class="sq">'+esc(k.question)+'</div>':'')+'<div class="s">The right answer</div><div class="sans">'+esc(k.answer)+'</div><div class="s">'+(res?'You said <b style="color:var(--gold2)">'+esc(res.n)+'</b> — '+(res.pts>0?'<b style="color:var(--gold2)">+'+res.pts+' points</b>':'no points this time'):'You didn\'t answer this one.')+'</div>';
-    else if(k.state==='ready') h=M+'<div class="t">Round '+esc(k.number)+'</div><div class="s">Get ready — watch the big screen!</div>';
+    const val=i=>mine&&mine[i]!=null?mine[i]:'';
+    const qHtml=(x,i)=>'<div class="sq" style="'+(many?'font-size:24px':'')+'">'+(many?(i+1)+'. ':'')+esc(x)+'</div>';
+    if(k.state==='live') h=qs.map((x,i)=>qHtml(x,i)+'<input class="snum" data-qi="'+i+'" id="sknum'+i+'" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" style="'+(many?'font-size:48px;width:min(48vw,180px)':'')+'" value="'+esc(val(i))+'">').join('')+'<div class="sct" data-seekleft="1"></div><button class="sbtn" data-act="seek">'+(mine?'UPDATE':'SEND')+'</button><div class="s" id="skerr">'+(mine?'Answer sent — you can change it until time is up.':(many?'Count each one and type your numbers. You need all of them!':'Count what the question asks and type your number.'))+'</div>';
+    else if(k.state==='closed') h=M+'<div class="t">Time\'s up!</div><div class="s">'+(mine?'Your answers: <b style="color:var(--gold2)">'+mine.map(x=>x==null?'–':esc(x)).join(' · ')+'</b>':'No answer sent.')+'<br>Eyes on the big screen.</div>';
+    else if(k.state==='revealed') h=qs.map((x,i)=>qHtml(x,i)+'<div class="s">Right answer</div><div class="sans" style="'+(many?'font-size:56px':'')+'">'+esc((k.answers||[])[i])+'</div><div class="s">'+(res&&res.ns[i]!=null?'You said <b style="color:var(--gold2)">'+esc(res.ns[i])+'</b>':'No answer')+'</div>').join('')+'<div class="s" style="font-size:18px">'+(res?(res.pts>0?'<b style="color:var(--gold2)">+'+res.pts+' points</b>':'No points this time'):'You didn\'t answer this one.')+'</div>';
+    else if(k.state==='ready') h=M+'<div class="t">Picture '+esc(k.number)+'</div><div class="s">Get ready — watch the big screen!'+(many?'<br>'+qs.length+' questions this time.':'')+'</div>';
     else if(k.state==='done') h=M+'<div class="t">That\'s Seek!</div><div class="s">Thanks for playing.</div>';
     else h=M+'<div class="t">Belladonna Seek</div><div class="s">A picture, a tricky thing to count, and a timer.<br>Get ready!</div>';
   } else h=M+'<div class="t">Waiting</div><div class="s">for the host to pick a game</div>';
@@ -297,17 +299,19 @@ function sendEnter(){ if (!st || !st.raffle) return; set(ref(db, base() + '/raff
 function sendVote(i){ if (!st || !st.vote || st.vote.state !== 'open') return; const vid = st.vote.id; myVotes[vid] = i; LS.set('moth-vote-' + code, JSON.stringify({ vid, idx: i })); set(ref(db, base() + '/vote/' + pid), { vid, idx: i }).catch(()=>{}); render(); }
 /* ───── Belladonna Seek: type how many you counted before the timer runs out ───── */
 let seekStamp={at:0,left:0};
-const mySeeks={}; const mySeekFor=sid=>(sid!=null&&mySeeks[sid]!=null)?mySeeks[sid]:(()=>{ try{ const x=JSON.parse(LS.get('moth-seek-'+code)||'null'); return x&&x.sid===sid?x.n:null; }catch(e){ return null; } })();
+const mySeeks={}; const mySeekNow=k=>{ if(k.id!=null&&mySeeks[k.id]) return mySeeks[k.id]; try{ const x=JSON.parse(LS.get('moth-seek-'+code)||'null'); return x&&x.sid===k.id?x.ns:null; }catch(e){ return null; } };
 function seekTick(){ document.querySelectorAll('#alt [data-seekleft]').forEach(e=>{ e.textContent=Math.max(0,Math.ceil((seekStamp.left-(Date.now()-seekStamp.at))/1000)); }); }
 setInterval(seekTick,250);
+function seekValues(){ const els=[...document.querySelectorAll('#alt .snum')]; return els.map(e=>e.value.trim()); }
+function seekCheck(){ const vals=seekValues(), msg=document.getElementById('skerr');
+  if(vals.some(x=>x!==''&&!/^\d{1,3}$/.test(x))||!vals.some(x=>x!=='')){ if(msg) msg.textContent='Type a whole number first.'; return null; }
+  return vals.map(x=>x===''?null:parseInt(x,10)); }
 function sendSeek(){
-  const k=st&&st.seek; if(!k||k.state!=='live') return;
-  const el=document.getElementById('sknum'), raw=el?el.value.trim():'', msg=document.getElementById('skerr');
-  if(!/^\d{1,3}$/.test(raw)){ if(msg) msg.textContent='Type a whole number first.'; return; }
-  const n=parseInt(raw,10); mySeeks[k.id]=n; LS.set('moth-seek-'+code, JSON.stringify({sid:k.id,n}));
-  set(ref(db, base() + '/seek/' + pid), { sid:k.id, n }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render();
+  const k=st&&st.seek; if(!k||k.state!=='live') return; const ns=seekCheck(); if(!ns) return;
+  mySeeks[k.id]=ns; LS.set('moth-seek-'+code, JSON.stringify({sid:k.id,ns}));
+  set(ref(db, base() + '/seek/' + pid), { sid:k.id, ns:ns.map(x=>x==null?'':x).join(',') }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render();
 }
-document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='sknum') sendSeek(); });
+document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.classList.contains('snum')) sendSeek(); });
 $('#buzz').addEventListener('pointerdown', buzz);
 $('#goBtn').onclick = join;
 ['code','nm'].forEach(i => $('#'+i).addEventListener('keydown', e => { if (e.key === 'Enter') join(); }));
