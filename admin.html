@@ -343,7 +343,6 @@ function picEditor(){
    +'<label class="l">Tags (separate with commas, like sunglasses, christmas)</label><input type="text" data-f="tagsText" value="'+esc(d.tagsText)+'">'
    +'<label class="l">Picture link (from Cloudflare, starts with https://)</label><input type="text" id="spurl" data-f="url" value="'+esc(d.url)+'">'
    +'<div style="margin-top:8px">'+(okUrl(d.url)?'<img class="thumb" style="width:100%;height:auto;max-height:340px" referrerpolicy="no-referrer" src="'+esc(d.url.trim())+'" alt="">':'<div class="thumb none" style="width:100%;height:160px">Paste a link to see the picture</div>')+'</div>'
-   +'<label class="l">Seconds to answer each question</label><input type="number" min="5" max="120" step="1" data-f="seconds" value="'+esc(d.seconds)+'" style="max-width:140px">'
    +(pls.length?'<label class="l">In these playlists</label><div>'+pls.map(l=>'<label style="display:inline-flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--text2);margin:4px 18px 4px 0"><input type="checkbox" data-pl="'+l+'"'+(d.lists.has(l)?' checked':'')+' style="width:auto">'+esc(SPL[l].name||'Untitled')+'</label>').join('')+'</div>':'')
    +'</div><div>'
    +'<label class="l" style="margin-top:12px">Questions ('+qs.length+' of 3)</label>'
@@ -393,7 +392,6 @@ $('#sbody').addEventListener('click', async e => {
       const d = sk.d, url = d.url.trim(), title = d.title.trim(), tags = parseTags(d.tagsText);
       if (!title) return fail('Give the picture a name first.');
       if (!okUrl(url)) return fail('The picture link must start with https:// — copy it from Cloudflare.');
-      const sRaw = String(d.seconds).trim(), secs = sRaw==='' ? 20 : Number(sRaw); if (!Number.isInteger(secs) || secs<5 || secs>120) return fail('Seconds must be a whole number from 5 to 120.');
       const questions = [];
       for (let i=0;i<d.questions.length;i++) {
         const x = d.questions[i], k = d.questions.length>1 ? 'Question '+(i+1)+': ' : '';
@@ -403,7 +401,7 @@ $('#sbody').addEventListener('click', async e => {
         const u = String(x.u||'').trim(); if (u && !okUrl(u)) return fail(k+'the answer picture link must start with https:// (or leave it empty).');
         questions.push({ q, a:Number(a), ...(u?{u}:{}) });
       }
-      await set(ref(db,'moth/seekpics/'+sk.id), { title, ...(tags.length?{tags}:{}), url, seconds:secs, questions, updatedAt: serverTimestamp() });
+      await set(ref(db,'moth/seekpics/'+sk.id), { title, ...(tags.length?{tags}:{}), url, questions, updatedAt: serverTimestamp() });
       for (const l of Object.keys(SPL)) { const has = plPics(SPL[l]), want = d.lists.has(l), now = has.includes(sk.id);
         if (want !== now) { const pics = want ? [...has, sk.id] : has.filter(x=>x!==sk.id); if (!pics.length) await remove(ref(db,'moth/seekplaylists/'+l)); else await set(ref(db,'moth/seekplaylists/'+l), { name:SPL[l].name, pics, updatedAt: serverTimestamp() }); } }
       sk.isNew = false; sdirty=false; d.url=url; d.title=title; d.tagsText=tags.join(', '); sRender(); toast('Saved “'+title+'”');
