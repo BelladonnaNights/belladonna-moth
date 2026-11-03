@@ -26,7 +26,23 @@ textarea{resize:vertical;min-height:110px;line-height:1.5}
 #gate h1{font-family:var(--display);font-size:54px;letter-spacing:.05em;color:var(--gold2);line-height:1}
 #gate p{color:var(--text2);margin:8px 0 22px;font-size:14px}#gate input{margin-bottom:10px;text-align:center}
 .err{color:var(--gold2);font-size:13px;min-height:20px;margin-top:8px}
-main{display:grid;grid-template-columns:290px 1fr;gap:16px;padding:18px 22px;max-width:1200px;margin:0 auto}
+main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:12px 0 4px}
+.game{max-width:1600px;margin:14px auto 0;padding:0 22px}
+.gh{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;color:var(--gold);font-family:var(--cinzel);font-size:14px;letter-spacing:.22em;text-transform:uppercase}
+.gh:hover{border-color:var(--gold)}.gh .car{margin-left:auto;color:var(--text3);font-size:16px;letter-spacing:0}
+.game.closed>main{display:none}
+.ph .btn{width:120px;flex:none;white-space:nowrap;text-align:center;padding-left:0;padding-right:0}
+.ph>span:first-child{min-width:0}
+main.one{grid-template-columns:1fr}
+.tool{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}.tool>div{flex:1;min-width:240px}
+.tg{display:inline-block;padding:2px 10px;border-radius:99px;border:1px solid var(--border2);font-size:12px;color:var(--text2);background:transparent;margin:0 6px 6px 0;cursor:pointer}.tg.on{border-color:var(--gold);color:var(--gold3);background:rgba(201,168,76,.14)}.tg.s{cursor:default;margin:0;padding:1px 8px;font-size:11px}
+.sg{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:var(--cinzel);font-size:12px;letter-spacing:.2em;text-transform:uppercase;padding:10px 2px;margin-top:10px;text-align:left}.sg .car{margin-left:auto;color:var(--text3)}
+.sc{border:1px solid var(--border);border-radius:12px;margin:8px 0;background:var(--surface2)}.sc.open{border-color:var(--gold)}
+.sch{display:flex;align-items:center;gap:12px;padding:8px 12px;cursor:pointer;flex-wrap:wrap}
+.sch .th{width:64px;height:38px;object-fit:cover;border-radius:6px;background:#000;border:1px solid var(--border2);flex:none}.sch .th.none{display:block}
+.sch .ct{font-weight:700;min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:40ch}.sch .cc{color:var(--text3);font-size:12px}.sch .car{margin-left:auto;color:var(--text3)}
+.scb{padding:4px 16px 16px;border-top:1px solid var(--border)}
+.ed2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px}@media(max-width:900px){.ed2{grid-template-columns:1fr}}
 @media(max-width:760px){main{grid-template-columns:1fr}}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .ph{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-family:var(--cinzel);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
@@ -72,30 +88,36 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
   <img src="logo.png" onerror="this.onerror=null;this.src='moth.png'" alt=""><div class="logo">BELLADONNA MOTH<small>ADMIN</small></div>
   <div class="sp"></div><span class="who" id="who"></span><button class="btn sm" id="out">Sign out</button>
 </header>
+<div class="game closed" id="g-tune"><button class="gh" data-game="g-tune">Name That Tune<span class="car">▸</span></button>
 <main>
   <section class="panel"><div class="ph"><span>Playlists</span><span class="sp"></span><button class="btn sm gold" id="newPl">+ New</button></div>
     <div class="pb" id="list"></div></section>
   <section class="panel"><div class="ph"><span id="edTitle">Playlist</span><span class="sp"></span><span class="dirty" id="dirty"></span></div>
     <div class="pb" id="ed"></div></section>
 </main>
+</div>
+<div class="game closed" id="g-vote"><button class="gh" data-game="g-vote">Crowd Vote<span class="car">▸</span></button>
 <main id="vmain">
-  <section class="panel"><div class="ph"><span>Crowd Vote lists</span><span class="sp"></span><button class="btn sm gold" id="newVl">+ New</button></div>
+  <section class="panel"><div class="ph"><span>Vote lists</span><span class="sp"></span><button class="btn sm gold" id="newVl">+ New</button></div>
     <div class="pb" id="vlist"></div></section>
   <section class="panel"><div class="ph"><span id="vTitle">Vote list</span><span class="sp"></span><span class="dirty" id="vdirty"></span></div>
     <div class="pb" id="ved"></div></section>
 </main>
+</div>
+<div class="game closed" id="g-distill"><button class="gh" data-game="g-distill">Distill<span class="car">▸</span></button>
 <main id="dmain">
   <section class="panel"><div class="ph"><span>Distill lists</span><span class="sp"></span><button class="btn sm gold" id="newDl">+ New</button></div>
     <div class="pb"><a class="btn gold" style="display:block;text-align:center;text-decoration:none;margin-bottom:12px" href="https://belladonnanights.github.io/belladonna-moth/distill-creator.html" target="_blank" rel="noopener">Open the Distill Creator ↗</a><div id="dlist"></div></div></section>
   <section class="panel"><div class="ph"><span id="dTitle">Distill list</span><span class="sp"></span><span class="dirty" id="ddirty"></span></div>
     <div class="pb" id="ded"></div></section>
 </main>
-<main id="smain">
-  <section class="panel"><div class="ph"><span>Seek bank</span><span class="sp"></span><button class="btn sm" id="newSpl">+ Playlist</button><button class="btn sm gold" id="newSp">+ Picture</button></div>
-    <div class="pb"><div id="slist"></div></div></section>
-  <section class="panel"><div class="ph"><span id="sTitle">Seek</span><span class="sp"></span><span class="dirty" id="sdirty"></span></div>
-    <div class="pb" id="sed"></div></section>
+</div>
+<div class="game closed" id="g-seek"><button class="gh" data-game="g-seek">Belladonna Seek<span class="car">▸</span></button>
+<main id="smain" class="one">
+  <section class="panel"><div class="ph"><span>Pictures &amp; playlists</span><span class="sp"></span><span class="dirty" id="sdirty"></span><button class="btn sm" id="newSpl">+ New playlist</button><button class="btn sm gold" id="newSp">+ New picture</button></div>
+    <div class="pb"><div class="tool"><div><label class="l" style="margin-top:0">Find a picture (title, tag or question)</label><input type="text" id="sfind"></div></div><div id="stags"></div><div id="sbody"></div></div></section>
 </main>
+</div>
 </div>
 <div id="toast"></div>
 
@@ -260,87 +282,116 @@ $('#ded').addEventListener('click', async e => {
   if (b.id==='ddel') { if (!confirm('Delete “'+(ddraft.name||'this list')+'” for everyone?')) return;
     try { if (DLs[dcur]) await remove(ref(db,'moth/distilllists/'+dcur)); dcur=null; ddraft=null; ddirty=false; dListR(); dEd(); toast('Distill list deleted'); } catch(err) { $('#derr').textContent = err.message; } }
 });
-/* ── Seek bank: every picture lives in moth/seekpics (a Cloudflare link, 1-3 questions with answers); playlists in moth/seekplaylists just group pictures ── */
-let SP = {}, SPL = {}, sk = null, sdirty = false;   // sk = what is open on the right: { kind:'pic'|'pl', id, d: draft }
+/* ── game sections collapse under the game's name (closed by default; the page remembers what you opened) ── */
+const OPEN_KEY = 'moth.admin.open';
+let openGames = {}; try { openGames = JSON.parse(localStorage.getItem(OPEN_KEY) || '{}') || {}; } catch(e){}
+function paintGames(){ document.querySelectorAll('.game').forEach(g => { const on = !!openGames[g.id]; g.classList.toggle('closed', !on); g.querySelector('.gh .car').textContent = on ? '▾' : '▸'; }); }
+document.querySelectorAll('.gh').forEach(b => b.addEventListener('click', () => { openGames[b.dataset.game] = !openGames[b.dataset.game]; try { localStorage.setItem(OPEN_KEY, JSON.stringify(openGames)); } catch(e){} paintGames(); }));
+paintGames();
+
+/* ── Seek bank: every picture lives in moth/seekpics (a name, tags, a Cloudflare link, 1-3 questions with answers); playlists in moth/seekplaylists just group pictures ── */
+let SP = {}, SPL = {}, sk = null, sdirty = false, sFind = '', sTag = '', sOpen = { pl:true, pic:true };   // sk = the one card open for editing: { kind:'pic'|'pl', id, d: draft }
 const blankQ = () => ({ q:'', a:'', u:'' });
 const picQs = p => (Array.isArray(p.questions) ? p.questions : Object.values(p.questions || {})).map(x => ({ q: String((x && x.q) || ''), a: x && x.a != null ? String(x.a) : '', u: String((x && x.u) || '') }));
+const picTags = p => (Array.isArray(p.tags) ? p.tags : Object.values(p.tags || {})).map(String);
 const plPics = p => (Array.isArray(p.pics) ? p.pics : Object.values(p.pics || {})).map(String);
-function sstart(){
-  onValue(ref(db,'moth/seekpics'), s => { SP = s.val() || {}; sList(); if (sk && sk.kind==='pl' && !sdirty) sEd(); });
-  onValue(ref(db,'moth/seekplaylists'), s => { SPL = s.val() || {}; sList(); if (sk && !sdirty && sk.id && ((sk.kind==='pl' && SPL[sk.id]) || sk.kind==='pic')) { /* keep the open draft */ } });
-  sEd();
-}
-function sList(){
-  const pls = Object.keys(SPL).sort((a,b)=>String(SPL[a].name).localeCompare(String(SPL[b].name)));
-  const pics = Object.keys(SP).sort((a,b)=>(+SP[b].updatedAt||0)-(+SP[a].updatedAt||0));
-  $('#slist').innerHTML =
-    '<div class="empty" style="text-align:left;padding:0 0 8px"><b>Playlists</b> — a game can play the whole bank or just one playlist</div>'
-    + (pls.length ? pls.map(id=>'<div class="pl'+(sk&&sk.kind==='pl'&&sk.id===id?' on':'')+'" data-k="pl" data-id="'+id+'"><span class="n">'+esc(SPL[id].name||'Untitled')+'</span><span class="c">'+plPics(SPL[id]).filter(x=>SP[x]).length+' pictures</span></div>').join('') : '<div class="empty" style="padding:6px 0 12px">No playlists yet.</div>')
-    + '<div class="empty" style="text-align:left;padding:14px 0 8px"><b>All pictures ('+pics.length+')</b></div>'
-    + (pics.length ? pics.map(id=>{ const q=picQs(SP[id]); return '<div class="pl'+(sk&&sk.kind==='pic'&&sk.id===id?' on':'')+'" data-k="pic" data-id="'+id+'"><span class="n">'+esc((q[0]&&q[0].q||'Untitled').split('\n')[0])+'</span><span class="c">'+q.length+(q.length===1?' question':' questions')+'</span></div>'; }).join('') : '<div class="empty" style="padding:6px 0">No pictures yet.<br>Press <b>+ Picture</b> to add the first one.</div>');
-}
-const sGuard = () => !sdirty || confirm('You have unsaved changes. Switch anyway?');
-$('#slist').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r || !sGuard()) return; r.dataset.k==='pl' ? openPl(r.dataset.id) : openPic(r.dataset.id); });
-$('#newSp').onclick = () => { if (!sGuard()) return; sk = { kind:'pic', id:push(ref(db,'moth/seekpics')).key, isNew:true, d:{ url:'', seconds:'20', questions:[blankQ()], lists:new Set() } }; sdirty=true; sList(); sEd(); setTimeout(()=>$('#spurl')&&$('#spurl').focus(),30); };
-$('#newSpl').onclick = () => { if (!sGuard()) return; sk = { kind:'pl', id:push(ref(db,'moth/seekplaylists')).key, isNew:true, d:{ name:'', pics:new Set() } }; sdirty=true; sList(); sEd(); setTimeout(()=>$('#spnm')&&$('#spnm').focus(),30); };
-function openPic(id){ const p = SP[id]; if (!p) return; sk = { kind:'pic', id, d:{ url:String(p.url||''), seconds:p.seconds!=null?String(p.seconds):'20', questions:picQs(p).length?picQs(p):[blankQ()], lists:new Set(Object.keys(SPL).filter(l=>plPics(SPL[l]).includes(id))) } }; sdirty=false; sList(); sEd(); }
-function openPl(id){ const p = SPL[id]; if (!p) return; sk = { kind:'pl', id, d:{ name:String(p.name||''), pics:new Set(plPics(p)) } }; sdirty=false; sList(); sEd(); }
-function smark(){ sdirty = true; $('#sdirty').textContent = 'Unsaved changes'; }
+const parseTags = t => { const out = []; for (const x of String(t||'').split(',')) { const v = x.replace(/\s+/g,' ').trim().toLowerCase().slice(0,24); if (v && !out.includes(v)) out.push(v); } return out.slice(0,12); };
+const picName = p => (String(p.title||'').trim()) || (picQs(p)[0] && picQs(p)[0].q.split('\n')[0]) || 'Untitled';
 const okUrl = u => /^https:\/\/[^\s"'<>]{4,480}$/.test(String(u||'').trim());
-function sEd(){
-  const box = $('#sed');
-  if (!sk) { $('#sTitle').textContent='Seek'; $('#sdirty').textContent=''; box.innerHTML='<div class="empty">Pick a picture or playlist on the left, or press <b>+ Picture</b>.<br>A picture is a Cloudflare link plus one to three tricky questions about it, like “How many ducks are wearing hats?”. When a game plays a picture it asks one of its questions at random — or two or three on the harder setting.</div>'; return; }
+function sstart(){
+  onValue(ref(db,'moth/seekpics'), s => { SP = s.val() || {}; sRender(); });
+  onValue(ref(db,'moth/seekplaylists'), s => { SPL = s.val() || {}; sRender(); });
+  sRender();
+}
+function keepFocus(fn){ const a = document.activeElement; let sel = null, pos = 0;
+  if (a && a.closest && a.closest('#sbody')) { pos = a.selectionStart || 0; const card = a.closest('.rnd'); sel = a.id ? '#'+a.id : a.dataset.f ? '[data-f="'+a.dataset.f+'"]' : a.dataset.q ? (card ? '.rnd[data-i="'+card.dataset.i+'"] ' : '')+'[data-q="'+a.dataset.q+'"]' : null; }
+  fn(); if (sel) { const n = document.querySelector('#sbody '+sel); if (n) { n.focus(); try { n.setSelectionRange(pos,pos); } catch(_){} } } }
+const chips = tags => tags.map(t=>'<span class="tg s">'+esc(t)+'</span>').join(' ');
+function sRender(){
   $('#sdirty').textContent = sdirty ? 'Unsaved changes' : '';
-  if (sk.kind === 'pl') {
-    const d = sk.d, ids = Object.keys(SP).sort((a,b)=>(+SP[b].updatedAt||0)-(+SP[a].updatedAt||0));
-    $('#sTitle').textContent = d.name || 'New playlist';
-    box.innerHTML = '<label class="l" style="margin-top:0">Playlist name (what the host sees in the menu)</label><input type="text" id="spnm" maxlength="60" value="'+esc(d.name)+'">'
-     +'<label class="l">Pictures in this playlist ('+[...d.pics].filter(x=>SP[x]).length+')</label>'
-     +(ids.length ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">'+ids.map(id=>'<label class="sel" style="cursor:pointer;border:1px solid '+(d.pics.has(id)?'var(--gold)':'var(--border)')+';border-radius:10px;padding:6px;display:block;text-transform:none;letter-spacing:0"><img class="thumb" style="width:100%;height:90px" loading="lazy" referrerpolicy="no-referrer" src="'+esc(SP[id].url)+'" alt=""><span style="display:flex;gap:6px;align-items:flex-start;margin-top:6px;font-size:12.5px;color:var(--text2)"><input type="checkbox" data-pic="'+id+'"'+(d.pics.has(id)?' checked':'')+' style="width:auto;margin-top:2px"><span>'+esc((picQs(SP[id])[0]||{q:''}).q.split('\n')[0])+'</span></span></label>').join('')+'</div>' : '<div class="empty">Add some pictures first.</div>')
-     +'<div class="bar" style="margin-top:18px"><button class="btn gold" id="ssave">Save playlist</button><span class="sp"></span>'+(sk.isNew?'':'<button class="btn danger" id="sdel">Delete playlist</button>')+'</div><div class="err" id="skerr"></div>'
-     +'<p class="hint" style="margin-top:6px">Deleting a playlist never deletes the pictures. A picture can be in as many playlists as you like — a holiday playlist, a sunglasses playlist — and always stays in the whole bank too.</p>';
-    return;
-  }
-  const d = sk.d, qs = d.questions;
-  $('#sTitle').textContent = (qs[0] && qs[0].q.split('\n')[0]) || 'New picture';
+  const all = {}; Object.values(SP).forEach(p => picTags(p).forEach(t => all[t] = (all[t]||0)+1));
+  $('#stags').innerHTML = Object.keys(all).sort().map(t=>'<button class="tg'+(sTag===t?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+' ('+all[t]+')</button>').join('');
   const pls = Object.keys(SPL).sort((a,b)=>String(SPL[a].name).localeCompare(String(SPL[b].name)));
-  box.innerHTML =
-    '<label class="l" style="margin-top:0">Picture link (from Cloudflare, starts with https://)</label><input type="text" id="spurl" data-f="url" value="'+esc(d.url)+'">'
-   +'<div style="margin-top:8px">'+(okUrl(d.url)?'<img class="thumb" style="width:100%;max-width:420px;height:auto;max-height:240px" referrerpolicy="no-referrer" src="'+esc(d.url.trim())+'" alt="">':'<div class="thumb none" style="width:100%;max-width:420px">Paste a link to see the picture</div>')+'</div>'
+  const f = sFind.trim().toLowerCase();
+  const match = id => { const p = SP[id]; if (sTag && !picTags(p).includes(sTag)) return false; if (!f) return true; return (picName(p)+' '+picTags(p).join(' ')+' '+picQs(p).map(q=>q.q).join(' ')).toLowerCase().includes(f); };
+  const pics = Object.keys(SP).sort((a,b)=>picName(SP[a]).localeCompare(picName(SP[b]))).filter(match);
+  const isOpen = (k,id) => sk && sk.kind===k && sk.id===id;
+  const plCard = id => { const p = SPL[id], open = isOpen('pl',id);
+    return '<div class="sc'+(open?' open':'')+'" data-k="pl" data-id="'+id+'"><div class="sch" data-a="toggle"><span class="ct">'+esc(open?(sk.d.name||'New playlist'):(p.name||'Untitled'))+'</span><span class="cc">'+plPics(p).filter(x=>SP[x]).length+' pictures</span><span class="car">'+(open?'▾':'▸')+'</span></div>'+(open?'<div class="scb">'+plEditor()+'</div>':'')+'</div>'; };
+  const picCard = id => { const p = SP[id], open = isOpen('pic',id), n = picQs(p).length;
+    return '<div class="sc'+(open?' open':'')+'" data-k="pic" data-id="'+id+'"><div class="sch" data-a="toggle"><img class="th" loading="lazy" referrerpolicy="no-referrer" src="'+esc(p.url)+'" alt=""><span class="ct">'+esc(open?(sk.d.title.trim()||picName(p)):picName(p))+'</span>'+chips(picTags(p))+'<span class="cc">'+n+(n===1?' question':' questions')+'</span><span class="car">'+(open?'▾':'▸')+'</span></div>'+(open?'<div class="scb">'+picEditor()+'</div>':'')+'</div>'; };
+  const newCard = () => sk && sk.isNew ? (sk.kind==='pl' ? '<div class="sc open" data-k="pl" data-id="'+sk.id+'"><div class="sch" data-a="toggle"><span class="ct">'+esc(sk.d.name||'New playlist')+'</span><span class="car">▾</span></div><div class="scb">'+plEditor()+'</div></div>'
+    : '<div class="sc open" data-k="pic" data-id="'+sk.id+'"><div class="sch" data-a="toggle"><span class="ct">'+esc(sk.d.title.trim()||'New picture')+'</span><span class="car">▾</span></div><div class="scb">'+picEditor()+'</div></div>') : '';
+  $('#sbody').innerHTML =
+    '<button class="sg" data-g="pl">Playlists ('+pls.length+')<span class="car">'+(sOpen.pl?'▾':'▸')+'</span></button>'
+    +(sOpen.pl ? (sk&&sk.isNew&&sk.kind==='pl'?newCard():'')+(pls.length ? pls.map(plCard).join('') : (sk&&sk.isNew&&sk.kind==='pl'?'':'<div class="empty" style="padding:10px">No playlists yet. A game can play the whole bank, one playlist, or one tag.</div>')) : '')
+    +'<button class="sg" data-g="pic">Pictures ('+pics.length+(f||sTag?' shown of '+Object.keys(SP).length:'')+')<span class="car">'+(sOpen.pic?'▾':'▸')+'</span></button>'
+    +(sOpen.pic ? (sk&&sk.isNew&&sk.kind==='pic'?newCard():'')+(pics.length ? pics.map(picCard).join('') : (sk&&sk.isNew&&sk.kind==='pic'?'':'<div class="empty" style="padding:10px">'+(Object.keys(SP).length?'No pictures match.':'No pictures yet. Press <b>+ New picture</b> to add the first one.')+'</div>')) : '');
+}
+function plEditor(){
+  const d = sk.d, ids = Object.keys(SP).sort((a,b)=>picName(SP[a]).localeCompare(picName(SP[b])));
+  return '<label class="l" style="margin-top:12px">Playlist name (what the host sees in the menu)</label><input type="text" id="spnm" maxlength="60" value="'+esc(d.name)+'">'
+   +'<label class="l">Pictures in this playlist ('+[...d.pics].filter(x=>SP[x]).length+')</label>'
+   +(ids.length ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px">'+ids.map(id=>'<label style="cursor:pointer;border:1px solid '+(d.pics.has(id)?'var(--gold)':'var(--border)')+';border-radius:10px;padding:6px;display:block;text-transform:none;letter-spacing:0"><img class="thumb" style="width:100%;height:96px" loading="lazy" referrerpolicy="no-referrer" src="'+esc(SP[id].url)+'" alt=""><span style="display:flex;gap:6px;align-items:flex-start;margin-top:6px;font-size:12.5px;color:var(--text2)"><input type="checkbox" data-pic="'+id+'"'+(d.pics.has(id)?' checked':'')+' style="width:auto;margin-top:2px"><span>'+esc(picName(SP[id]))+'</span></span></label>').join('')+'</div>' : '<div class="empty">Add some pictures first.</div>')
+   +'<div class="bar" style="margin-top:16px"><button class="btn gold" id="ssave">Save playlist</button><button class="btn" data-a="close">Close</button><span class="sp"></span>'+(sk.isNew?'':'<button class="btn danger" id="sdel">Delete playlist</button>')+'</div><div class="err" id="skerr"></div>'
+   +'<p class="hint">Deleting a playlist never deletes the pictures. A picture can be in as many playlists as you like and always stays in the whole bank too.</p>';
+}
+function picEditor(){
+  const d = sk.d, qs = d.questions, pls = Object.keys(SPL).sort((a,b)=>String(SPL[a].name).localeCompare(String(SPL[b].name)));
+  return '<div class="ed2"><div>'
+   +'<label class="l" style="margin-top:12px">Picture name</label><input type="text" data-f="title" maxlength="80" value="'+esc(d.title)+'">'
+   +'<label class="l">Tags (separate with commas, like sunglasses, christmas)</label><input type="text" data-f="tagsText" value="'+esc(d.tagsText)+'">'
+   +'<label class="l">Picture link (from Cloudflare, starts with https://)</label><input type="text" id="spurl" data-f="url" value="'+esc(d.url)+'">'
+   +'<div style="margin-top:8px">'+(okUrl(d.url)?'<img class="thumb" style="width:100%;height:auto;max-height:340px" referrerpolicy="no-referrer" src="'+esc(d.url.trim())+'" alt="">':'<div class="thumb none" style="width:100%;height:160px">Paste a link to see the picture</div>')+'</div>'
    +'<label class="l">Seconds to answer each question</label><input type="number" min="5" max="120" step="1" data-f="seconds" value="'+esc(d.seconds)+'" style="max-width:140px">'
-   +'<label class="l">Questions ('+qs.length+' of 3)</label>'
+   +(pls.length?'<label class="l">In these playlists</label><div>'+pls.map(l=>'<label style="display:inline-flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--text2);margin:4px 18px 4px 0"><input type="checkbox" data-pl="'+l+'"'+(d.lists.has(l)?' checked':'')+' style="width:auto">'+esc(SPL[l].name||'Untitled')+'</label>').join('')+'</div>':'')
+   +'</div><div>'
+   +'<label class="l" style="margin-top:12px">Questions ('+qs.length+' of 3)</label>'
    +qs.map((x,i)=>'<div class="rnd" data-i="'+i+'"><div class="top"><span class="no">'+(i+1)+'</span><span class="sp"></span>'+(qs.length>1?'<button class="ib rm" data-a="rmq" title="Remove this question">'+IC.x+'</button>':'')+'</div>'
      +'<label class="l" style="margin-top:0">Question</label><textarea data-q="q" style="min-height:64px">'+esc(x.q)+'</textarea>'
-     +'<div class="nums" style="margin-top:8px"><div><label class="l" style="margin-top:0">Right answer</label><input type="number" min="0" max="999" step="1" data-q="a" value="'+esc(x.a)+'"></div></div>'
+     +'<div class="nums" style="margin-top:8px"><div><label class="l" style="margin-top:0">Right answer</label><input type="number" min="0" max="999" step="1" data-q="a" value="'+esc(x.a)+'"></div><div></div></div>'
      +'<label class="l">Answer picture link for this question (optional) — the same photo with the right items circled; it gets its own answer slide</label><input type="text" data-q="u" value="'+esc(x.u)+'">'
      +(okUrl(x.u)?'<div style="margin-top:8px"><img class="thumb" style="width:100%;max-width:420px;height:auto;max-height:240px" referrerpolicy="no-referrer" src="'+esc(x.u.trim())+'" alt=""></div>':'')+'</div>').join('')
    +(qs.length<3?'<div class="bar"><button class="btn" id="saddq">+ Add another question</button><span class="hint">Each time this picture comes up, the game picks one of its questions at random (or two or three on the harder setting).</span></div>':'')
-   +(pls.length?'<label class="l">In these playlists</label><div>'+pls.map(l=>'<label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--text2);margin:4px 0"><input type="checkbox" data-pl="'+l+'"'+(d.lists.has(l)?' checked':'')+' style="width:auto">'+esc(SPL[l].name||'Untitled')+'</label>').join('')+'</div>':'')
-   +'<div class="bar" style="margin-top:18px"><button class="btn gold" id="ssave">Save picture</button><span class="sp"></span>'+(sk.isNew?'':'<button class="btn danger" id="sdel">Delete picture</button>')+'</div><div class="err" id="skerr"></div>';
+   +'</div></div>'
+   +'<div class="bar" style="margin-top:16px"><button class="btn gold" id="ssave">Save picture</button><button class="btn" data-a="close">Close</button><span class="sp"></span>'+(sk.isNew?'':'<button class="btn danger" id="sdel">Delete picture</button>')+'</div><div class="err" id="skerr"></div>';
 }
-$('#sed').addEventListener('input', e => { if (!sk) return; const d = sk.d, t = e.target;
-  if (t.id==='spnm') { d.name = t.value; $('#sTitle').textContent = d.name || 'New playlist'; }
-  else if (t.dataset.q) { d.questions[+t.closest('.rnd').dataset.i][t.dataset.q] = t.value; if (t.dataset.q==='u') { clearTimeout(sEd._t); sEd._t = setTimeout(()=>{ const i=t.closest('.rnd')&&t.closest('.rnd').dataset.i, pos=t.selectionStart; sEd(); const n=document.querySelector('#sed .rnd[data-i="'+i+'"] [data-q="u"]'); if (n) { n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }, 500); } }
-  else if (t.dataset.f) { d[t.dataset.f] = t.value; if (t.dataset.f==='url') { clearTimeout(sEd._t); sEd._t = setTimeout(()=>{ const a=document.activeElement, id=a&&a.id, f=a&&a.dataset.f, pos=a&&a.selectionStart; sEd(); const n = f ? document.querySelector('#sed [data-f="'+f+'"]') : null; if (n) { n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }, 500); } }
+const sGuard = () => !sdirty || confirm('You have unsaved changes. Switch anyway?');
+function openPic(id){ const p = SP[id]; if (!p) return; sk = { kind:'pic', id, d:{ title:String(p.title||''), tagsText:picTags(p).join(', '), url:String(p.url||''), seconds:p.seconds!=null?String(p.seconds):'20', questions:picQs(p).length?picQs(p):[blankQ()], lists:new Set(Object.keys(SPL).filter(l=>plPics(SPL[l]).includes(id))) } }; sdirty=false; sRender(); }
+function openPl(id){ const p = SPL[id]; if (!p) return; sk = { kind:'pl', id, d:{ name:String(p.name||''), pics:new Set(plPics(p)) } }; sdirty=false; sRender(); }
+function smark(){ sdirty = true; $('#sdirty').textContent = 'Unsaved changes'; }
+$('#newSp').onclick = () => { if (!sGuard()) return; sOpen.pic = true; sk = { kind:'pic', id:push(ref(db,'moth/seekpics')).key, isNew:true, d:{ title:'', tagsText:'', url:'', seconds:'20', questions:[blankQ()], lists:new Set() } }; sdirty=true; sRender(); setTimeout(()=>{ const n=$('#sbody [data-f=title]'); if (n) n.focus(); },30); };
+$('#newSpl').onclick = () => { if (!sGuard()) return; sOpen.pl = true; sk = { kind:'pl', id:push(ref(db,'moth/seekplaylists')).key, isNew:true, d:{ name:'', pics:new Set() } }; sdirty=true; sRender(); setTimeout(()=>{ const n=$('#spnm'); if (n) n.focus(); },30); };
+$('#sfind').addEventListener('input', e => { sFind = e.target.value; keepFocus(sRender); });
+$('#stags').addEventListener('click', e => { const b = e.target.closest('[data-tag]'); if (!b) return; sTag = sTag === b.dataset.tag ? '' : b.dataset.tag; sRender(); });
+$('#sbody').addEventListener('input', e => { if (!sk) return; const d = sk.d, t = e.target;
+  if (t.id==='spnm') { d.name = t.value; const c = $('#sbody .sc.open .ct'); if (c) c.textContent = d.name || 'New playlist'; }
+  else if (t.dataset.q) { d.questions[+t.closest('.rnd').dataset.i][t.dataset.q] = t.value; if (t.dataset.q==='u') { clearTimeout(sRender._t); sRender._t = setTimeout(()=>keepFocus(sRender), 500); } }
+  else if (t.dataset.f) { d[t.dataset.f] = t.value; if (t.dataset.f==='title') { const c = $('#sbody .sc.open .ct'); if (c) c.textContent = t.value.trim() || 'New picture'; } if (t.dataset.f==='url') { clearTimeout(sRender._t); sRender._t = setTimeout(()=>keepFocus(sRender), 500); } }
   else return;
   smark(); });
-$('#sed').addEventListener('change', e => { if (!sk) return; const t = e.target;
-  if (t.dataset.pic) { t.checked ? sk.d.pics.add(t.dataset.pic) : sk.d.pics.delete(t.dataset.pic); smark(); sEd(); }
+$('#sbody').addEventListener('change', e => { if (!sk) return; const t = e.target;
+  if (t.dataset.pic) { t.checked ? sk.d.pics.add(t.dataset.pic) : sk.d.pics.delete(t.dataset.pic); smark(); sRender(); }
   else if (t.dataset.pl) { t.checked ? sk.d.lists.add(t.dataset.pl) : sk.d.lists.delete(t.dataset.pl); smark(); } });
-$('#sed').addEventListener('click', async e => {
+$('#sbody').addEventListener('click', async e => {
+  const g = e.target.closest('.sg'); if (g) { sOpen[g.dataset.g] = !sOpen[g.dataset.g]; sRender(); return; }
+  const head = e.target.closest('.sch'); if (head) { const card = head.closest('.sc'), k = card.dataset.k, id = card.dataset.id;
+    if (sk && sk.kind===k && sk.id===id) { if (!sGuard()) return; sk = null; sdirty = false; sRender(); } else { if (!sGuard()) return; k==='pl' ? openPl(id) : openPic(id); } return; }
   const b = e.target.closest('button'); if (!b || !sk) return; const card = b.closest('.rnd'), i = card ? +card.dataset.i : -1;
   const fail = m => { const el = $('#skerr'); if (el) el.textContent = m; };
-  if (b.dataset.a==='rmq' && i>=0) { sk.d.questions.splice(i,1); smark(); sEd(); }
-  if (b.id==='saddq') { if (sk.d.questions.length<3) sk.d.questions.push(blankQ()); smark(); sEd(); }
+  if (b.dataset.a==='close') { if (!sGuard()) return; sk = null; sdirty = false; sRender(); return; }
+  if (b.dataset.a==='rmq' && i>=0) { sk.d.questions.splice(i,1); smark(); sRender(); }
+  if (b.id==='saddq') { if (sk.d.questions.length<3) sk.d.questions.push(blankQ()); smark(); sRender(); }
   if (b.id==='ssave') {
     try {
       if (sk.kind==='pl') {
         const name = (sk.d.name||'').trim(); if (!name) return fail('Give the playlist a name first.');
         const pics = [...sk.d.pics].filter(x=>SP[x]); if (!pics.length) return fail('Tick at least one picture.');
         await set(ref(db,'moth/seekplaylists/'+sk.id), { name, pics, updatedAt: serverTimestamp() });
-        sk.d.name = name; sk.isNew = false; sdirty=false; sList(); sEd(); toast('Saved “'+name+'”'); return;
+        sk.d.name = name; sk.isNew = false; sdirty=false; sRender(); toast('Saved “'+name+'”'); return;
       }
-      const d = sk.d, url = d.url.trim();
+      const d = sk.d, url = d.url.trim(), title = d.title.trim(), tags = parseTags(d.tagsText);
+      if (!title) return fail('Give the picture a name first.');
       if (!okUrl(url)) return fail('The picture link must start with https:// — copy it from Cloudflare.');
       const sRaw = String(d.seconds).trim(), secs = sRaw==='' ? 20 : Number(sRaw); if (!Number.isInteger(secs) || secs<5 || secs>120) return fail('Seconds must be a whole number from 5 to 120.');
       const questions = [];
@@ -352,10 +403,10 @@ $('#sed').addEventListener('click', async e => {
         const u = String(x.u||'').trim(); if (u && !okUrl(u)) return fail(k+'the answer picture link must start with https:// (or leave it empty).');
         questions.push({ q, a:Number(a), ...(u?{u}:{}) });
       }
-      await set(ref(db,'moth/seekpics/'+sk.id), { url, seconds:secs, questions, updatedAt: serverTimestamp() });
+      await set(ref(db,'moth/seekpics/'+sk.id), { title, ...(tags.length?{tags}:{}), url, seconds:secs, questions, updatedAt: serverTimestamp() });
       for (const l of Object.keys(SPL)) { const has = plPics(SPL[l]), want = d.lists.has(l), now = has.includes(sk.id);
         if (want !== now) { const pics = want ? [...has, sk.id] : has.filter(x=>x!==sk.id); if (!pics.length) await remove(ref(db,'moth/seekplaylists/'+l)); else await set(ref(db,'moth/seekplaylists/'+l), { name:SPL[l].name, pics, updatedAt: serverTimestamp() }); } }
-      sk.isNew = false; sdirty=false; sk.d.url=url; sList(); sEd(); toast('Saved');
+      sk.isNew = false; sdirty=false; d.url=url; d.title=title; d.tagsText=tags.join(', '); sRender(); toast('Saved “'+title+'”');
     } catch(err2) { fail(/permission/i.test(err2.message) ? 'Firebase said no — add the moth/seekpics and moth/seekplaylists rules (everyone can read, admins can write) and check your login is in the admins list.' : (err2.message||'Could not save')); }
   }
   if (b.id==='sdel') {
@@ -363,7 +414,7 @@ $('#sed').addEventListener('click', async e => {
     try {
       if (sk.kind==='pl') await remove(ref(db,'moth/seekplaylists/'+sk.id));
       else { await remove(ref(db,'moth/seekpics/'+sk.id)); for (const l of Object.keys(SPL)) { const has = plPics(SPL[l]); if (has.includes(sk.id)) { const pics = has.filter(x=>x!==sk.id); if (!pics.length) await remove(ref(db,'moth/seekplaylists/'+l)); else await set(ref(db,'moth/seekplaylists/'+l), { name:SPL[l].name, pics, updatedAt: serverTimestamp() }); } } }
-      sk = null; sdirty=false; sList(); sEd(); toast('Deleted');
+      sk = null; sdirty=false; sRender(); toast('Deleted');
     } catch(err2) { fail(err2.message||'Could not delete'); }
   }
 });
