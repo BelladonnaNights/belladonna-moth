@@ -262,8 +262,8 @@ $('#ded').addEventListener('click', async e => {
 });
 /* ── Seek bank: every picture lives in moth/seekpics (a Cloudflare link, 1-3 questions with answers); playlists in moth/seekplaylists just group pictures ── */
 let SP = {}, SPL = {}, sk = null, sdirty = false;   // sk = what is open on the right: { kind:'pic'|'pl', id, d: draft }
-const blankQ = () => ({ q:'', a:'' });
-const picQs = p => (Array.isArray(p.questions) ? p.questions : Object.values(p.questions || {})).map(x => ({ q: String((x && x.q) || ''), a: x && x.a != null ? String(x.a) : '' }));
+const blankQ = () => ({ q:'', a:'', u:'' });
+const picQs = p => (Array.isArray(p.questions) ? p.questions : Object.values(p.questions || {})).map(x => ({ q: String((x && x.q) || ''), a: x && x.a != null ? String(x.a) : '', u: String((x && x.u) || '') }));
 const plPics = p => (Array.isArray(p.pics) ? p.pics : Object.values(p.pics || {})).map(String);
 function sstart(){
   onValue(ref(db,'moth/seekpics'), s => { SP = s.val() || {}; sList(); if (sk && sk.kind==='pl' && !sdirty) sEd(); });
@@ -281,9 +281,9 @@ function sList(){
 }
 const sGuard = () => !sdirty || confirm('You have unsaved changes. Switch anyway?');
 $('#slist').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r || !sGuard()) return; r.dataset.k==='pl' ? openPl(r.dataset.id) : openPic(r.dataset.id); });
-$('#newSp').onclick = () => { if (!sGuard()) return; sk = { kind:'pic', id:push(ref(db,'moth/seekpics')).key, isNew:true, d:{ url:'', answerUrl:'', seconds:'20', questions:[blankQ()], lists:new Set() } }; sdirty=true; sList(); sEd(); setTimeout(()=>$('#spurl')&&$('#spurl').focus(),30); };
+$('#newSp').onclick = () => { if (!sGuard()) return; sk = { kind:'pic', id:push(ref(db,'moth/seekpics')).key, isNew:true, d:{ url:'', seconds:'20', questions:[blankQ()], lists:new Set() } }; sdirty=true; sList(); sEd(); setTimeout(()=>$('#spurl')&&$('#spurl').focus(),30); };
 $('#newSpl').onclick = () => { if (!sGuard()) return; sk = { kind:'pl', id:push(ref(db,'moth/seekplaylists')).key, isNew:true, d:{ name:'', pics:new Set() } }; sdirty=true; sList(); sEd(); setTimeout(()=>$('#spnm')&&$('#spnm').focus(),30); };
-function openPic(id){ const p = SP[id]; if (!p) return; sk = { kind:'pic', id, d:{ url:String(p.url||''), answerUrl:String(p.answerUrl||''), seconds:p.seconds!=null?String(p.seconds):'20', questions:picQs(p).length?picQs(p):[blankQ()], lists:new Set(Object.keys(SPL).filter(l=>plPics(SPL[l]).includes(id))) } }; sdirty=false; sList(); sEd(); }
+function openPic(id){ const p = SP[id]; if (!p) return; sk = { kind:'pic', id, d:{ url:String(p.url||''), seconds:p.seconds!=null?String(p.seconds):'20', questions:picQs(p).length?picQs(p):[blankQ()], lists:new Set(Object.keys(SPL).filter(l=>plPics(SPL[l]).includes(id))) } }; sdirty=false; sList(); sEd(); }
 function openPl(id){ const p = SPL[id]; if (!p) return; sk = { kind:'pl', id, d:{ name:String(p.name||''), pics:new Set(plPics(p)) } }; sdirty=false; sList(); sEd(); }
 function smark(){ sdirty = true; $('#sdirty').textContent = 'Unsaved changes'; }
 const okUrl = u => /^https:\/\/[^\s"'<>]{4,480}$/.test(String(u||'').trim());
@@ -307,21 +307,21 @@ function sEd(){
   box.innerHTML =
     '<label class="l" style="margin-top:0">Picture link (from Cloudflare, starts with https://)</label><input type="text" id="spurl" data-f="url" value="'+esc(d.url)+'">'
    +'<div style="margin-top:8px">'+(okUrl(d.url)?'<img class="thumb" style="width:100%;max-width:420px;height:auto;max-height:240px" referrerpolicy="no-referrer" src="'+esc(d.url.trim())+'" alt="">':'<div class="thumb none" style="width:100%;max-width:420px">Paste a link to see the picture</div>')+'</div>'
-   +'<label class="l">Answer picture link (optional) — the same photo with the right items circled, shown at the reveal</label><input type="text" data-f="answerUrl" value="'+esc(d.answerUrl)+'">'
-   +(okUrl(d.answerUrl)?'<div style="margin-top:8px"><img class="thumb" style="width:100%;max-width:420px;height:auto;max-height:240px" referrerpolicy="no-referrer" src="'+esc(d.answerUrl.trim())+'" alt=""></div>':'')
    +'<label class="l">Seconds to answer each question</label><input type="number" min="5" max="120" step="1" data-f="seconds" value="'+esc(d.seconds)+'" style="max-width:140px">'
    +'<label class="l">Questions ('+qs.length+' of 3)</label>'
    +qs.map((x,i)=>'<div class="rnd" data-i="'+i+'"><div class="top"><span class="no">'+(i+1)+'</span><span class="sp"></span>'+(qs.length>1?'<button class="ib rm" data-a="rmq" title="Remove this question">'+IC.x+'</button>':'')+'</div>'
      +'<label class="l" style="margin-top:0">Question</label><textarea data-q="q" style="min-height:64px">'+esc(x.q)+'</textarea>'
-     +'<div class="nums" style="margin-top:8px"><div><label class="l" style="margin-top:0">Right answer</label><input type="number" min="0" max="999" step="1" data-q="a" value="'+esc(x.a)+'"></div></div></div>').join('')
+     +'<div class="nums" style="margin-top:8px"><div><label class="l" style="margin-top:0">Right answer</label><input type="number" min="0" max="999" step="1" data-q="a" value="'+esc(x.a)+'"></div></div>'
+     +'<label class="l">Answer picture link for this question (optional) — the same photo with the right items circled; it gets its own answer slide</label><input type="text" data-q="u" value="'+esc(x.u)+'">'
+     +(okUrl(x.u)?'<div style="margin-top:8px"><img class="thumb" style="width:100%;max-width:420px;height:auto;max-height:240px" referrerpolicy="no-referrer" src="'+esc(x.u.trim())+'" alt=""></div>':'')+'</div>').join('')
    +(qs.length<3?'<div class="bar"><button class="btn" id="saddq">+ Add another question</button><span class="hint">Each time this picture comes up, the game picks one of its questions at random (or two or three on the harder setting).</span></div>':'')
    +(pls.length?'<label class="l">In these playlists</label><div>'+pls.map(l=>'<label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px;color:var(--text2);margin:4px 0"><input type="checkbox" data-pl="'+l+'"'+(d.lists.has(l)?' checked':'')+' style="width:auto">'+esc(SPL[l].name||'Untitled')+'</label>').join('')+'</div>':'')
    +'<div class="bar" style="margin-top:18px"><button class="btn gold" id="ssave">Save picture</button><span class="sp"></span>'+(sk.isNew?'':'<button class="btn danger" id="sdel">Delete picture</button>')+'</div><div class="err" id="skerr"></div>';
 }
 $('#sed').addEventListener('input', e => { if (!sk) return; const d = sk.d, t = e.target;
   if (t.id==='spnm') { d.name = t.value; $('#sTitle').textContent = d.name || 'New playlist'; }
-  else if (t.dataset.q) { d.questions[+t.closest('.rnd').dataset.i][t.dataset.q] = t.value; }
-  else if (t.dataset.f) { d[t.dataset.f] = t.value; if (t.dataset.f==='url' || t.dataset.f==='answerUrl') { clearTimeout(sEd._t); sEd._t = setTimeout(()=>{ const a=document.activeElement, id=a&&a.id, f=a&&a.dataset.f, pos=a&&a.selectionStart; sEd(); const n = f ? document.querySelector('#sed [data-f="'+f+'"]') : null; if (n) { n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }, 500); } }
+  else if (t.dataset.q) { d.questions[+t.closest('.rnd').dataset.i][t.dataset.q] = t.value; if (t.dataset.q==='u') { clearTimeout(sEd._t); sEd._t = setTimeout(()=>{ const i=t.closest('.rnd')&&t.closest('.rnd').dataset.i, pos=t.selectionStart; sEd(); const n=document.querySelector('#sed .rnd[data-i="'+i+'"] [data-q="u"]'); if (n) { n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }, 500); } }
+  else if (t.dataset.f) { d[t.dataset.f] = t.value; if (t.dataset.f==='url') { clearTimeout(sEd._t); sEd._t = setTimeout(()=>{ const a=document.activeElement, id=a&&a.id, f=a&&a.dataset.f, pos=a&&a.selectionStart; sEd(); const n = f ? document.querySelector('#sed [data-f="'+f+'"]') : null; if (n) { n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }, 500); } }
   else return;
   smark(); });
 $('#sed').addEventListener('change', e => { if (!sk) return; const t = e.target;
@@ -340,9 +340,8 @@ $('#sed').addEventListener('click', async e => {
         await set(ref(db,'moth/seekplaylists/'+sk.id), { name, pics, updatedAt: serverTimestamp() });
         sk.d.name = name; sk.isNew = false; sdirty=false; sList(); sEd(); toast('Saved “'+name+'”'); return;
       }
-      const d = sk.d, url = d.url.trim(), aurl = d.answerUrl.trim();
+      const d = sk.d, url = d.url.trim();
       if (!okUrl(url)) return fail('The picture link must start with https:// — copy it from Cloudflare.');
-      if (aurl && !okUrl(aurl)) return fail('The answer picture link must start with https:// (or leave it empty).');
       const sRaw = String(d.seconds).trim(), secs = sRaw==='' ? 20 : Number(sRaw); if (!Number.isInteger(secs) || secs<5 || secs>120) return fail('Seconds must be a whole number from 5 to 120.');
       const questions = [];
       for (let i=0;i<d.questions.length;i++) {
@@ -350,12 +349,13 @@ $('#sed').addEventListener('click', async e => {
         const q = String(x.q||'').replace(/\r\n?/g,'\n').trim(); if (!q) return fail(k+'type the question.');
         if (q.length>200) return fail(k+'the question is over 200 letters — shorten it.');
         const a = String(x.a).trim(); if (!/^\d{1,3}$/.test(a)) return fail(k+'the right answer must be a whole number from 0 to 999.');
-        questions.push({ q, a:Number(a) });
+        const u = String(x.u||'').trim(); if (u && !okUrl(u)) return fail(k+'the answer picture link must start with https:// (or leave it empty).');
+        questions.push({ q, a:Number(a), ...(u?{u}:{}) });
       }
-      await set(ref(db,'moth/seekpics/'+sk.id), { url, ...(aurl?{answerUrl:aurl}:{}), seconds:secs, questions, updatedAt: serverTimestamp() });
+      await set(ref(db,'moth/seekpics/'+sk.id), { url, seconds:secs, questions, updatedAt: serverTimestamp() });
       for (const l of Object.keys(SPL)) { const has = plPics(SPL[l]), want = d.lists.has(l), now = has.includes(sk.id);
         if (want !== now) { const pics = want ? [...has, sk.id] : has.filter(x=>x!==sk.id); if (!pics.length) await remove(ref(db,'moth/seekplaylists/'+l)); else await set(ref(db,'moth/seekplaylists/'+l), { name:SPL[l].name, pics, updatedAt: serverTimestamp() }); } }
-      sk.isNew = false; sdirty=false; sk.d.url=url; sk.d.answerUrl=aurl; sList(); sEd(); toast('Saved');
+      sk.isNew = false; sdirty=false; sk.d.url=url; sList(); sEd(); toast('Saved');
     } catch(err2) { fail(/permission/i.test(err2.message) ? 'Firebase said no — add the moth/seekpics and moth/seekplaylists rules (everyone can read, admins can write) and check your login is in the admins list.' : (err2.message||'Could not save')); }
   }
   if (b.id==='sdel') {
