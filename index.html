@@ -156,7 +156,7 @@ function leave(msg){
 }
 function prevSet(n){ prev = st; st = n; }
 function render(){
-  if(cnDrag) return;
+  if(cnDrag){ cnLate=true; return; }
   if (!st) { altShow(false); $('#msg').textContent = 'Waiting for the host…'; return; }
   const r = st.round, me = (st.players || []).find(p => p.id === pid);
   if (!me) { if (Date.now() - joinedAt > 3500) leave('You were removed from the game. You can join again.'); else $('#msg').textContent = 'Joining…'; return; }
@@ -320,11 +320,13 @@ let tbSent=null;
 function sendTbNum(){ const el=document.getElementById('tbIn'); if(!el||!st||!st.tb) return; const n=parseInt(el.value,10); if(!(n>=1&&n<=9999)){ el.style.borderColor='#c0392b'; return; } tbSent={k:st.tb.id,n}; set(ref(db, base() + '/buzz/' + pid), { round: (st.tb.id+1)*10000+n, ts: serverTimestamp() }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
 function tbChange(){ tbSent=null; render(); }
 document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='tbIn') sendTbNum(); });
-let cnOrd=[],cnId=null,cnSeen=0,cnShakeT=0,cnDrag=null,cnPick=-1,cnTmT=null,cnRef={at:0,left:0};
+let cnOrd=[],cnId=null,cnSeen=0,cnShakeT=0,cnDrag=null,cnPick=-1,cnTmT=null,cnRef={at:0,left:0,paused:false},cnLate=false,cnSentAt=0,cnSentK=0,cnFail=null;
+function cnPaint(){ if(!st||!st.cn) return; document.querySelectorAll('.cnw .tile[data-p]').forEach(t=>{ const p=+t.dataset.p, w=st.cn.board[cnOrd[p]]; if(w==null) return; if(t.textContent!==w) t.textContent=w; t.style.fontSize=cnFs(w); t.classList.toggle('on',cnPick===p); }); }
 function cnFs(w){ const n=String(w).length; return n>14?'8px':n>9?'9px':n>7?'10.5px':'14px'; }
-function cnTick(){ const el=document.getElementById('cnTm'); if(!el){ clearInterval(cnTmT); cnTmT=null; return; } const l=Math.max(0,cnRef.left-(performance.now()-cnRef.at)), s=Math.ceil(l/1000); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); el.classList.toggle('low',s<=10&&l>0); }
+function cnTick(){ const el=document.getElementById('cnTm'); if(!el){ clearInterval(cnTmT); cnTmT=null; return; } const l=Math.max(0,cnRef.left-(cnRef.paused?0:performance.now()-cnRef.at)), s=Math.ceil(l/1000); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); el.classList.toggle('low',s<=10&&l>0);
+  const m=document.getElementById('cnWait'); if(m&&cnSentAt&&st&&st.cn&&st.cn.me&&(st.cn.me.l?st.cn.me.l.k:0)===cnSentK&&Date.now()-cnSentAt>4000&&!st.cn.paused) m.textContent=cnFail||'Not heard back yet — the host app may be offline or out of date.'; }
 function cnPhone(){
-  const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=c.me||(c.p&&c.p[me0])||{s:[],m:0,o:false,l:null}, M='<img src="/moth.png" alt="" id="altm">';
+  const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=c.me||(c.p&&c.p[me0])||{s:[],m:0,o:false,l:null}, M='<img src="'+document.querySelector('#join img').src+'" alt="" id="altm">';
   if(c.id!==cnId){ cnId=c.id; cnOrd=Array.from({length:16},(_,i)=>i); cnPick=-1; cnSeen=me.l?me.l.k:0; }
   if(c.state==='idle') return M+'<div class="t">Connections</div><div class="s">Get ready to sort the words.<br>Watch the big screen.</div>';
   const ti='<div class="cnti">'+esc(c.name||'')+'</div>';
@@ -335,17 +337,17 @@ function cnPhone(){
   if(fresh&&!l.ok) cnShakeT=Date.now()+600; const shake=Date.now()<cnShakeT, left=c.max-me.m;
   let msg=''; if(l){ msg=l.ok?'All four rows are right!':l.dup?'You already tried that arrangement — no entry used.':'Not quite — '+l.n+' of 4 rows are right.'; }
   if(me.s.length>=4) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
-  const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
+  const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0,paused:!!c.paused}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
   const rows=[0,1,2,3].map(r=>'<div class="crow"><i>'+(r+1)+'</i><div class="rw">'+[0,1,2,3].map(k=>{ const p=r*4+k, w=c.board[cnOrd[p]]; return '<div class="tile'+(cnPick===p?' on':'')+'" data-p="'+p+'" style="font-size:'+cnFs(w)+'">'+esc(w)+'</div>'; }).join('')+'</div></div>').join('');
   return '<div class="cnw'+(shake?' shake':'')+'">'+ti+tm+'<div class="msg2">Drag the words into rows. Each row is one group.</div><div class="grid">'+rows+'</div>'
     +'<div class="dots">Entries left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
-    +'<div class="msg'+(l&&!l.ok?' bad':'')+'">'+(me.o?'Out of entries — watch the screen.':esc(msg))+'</div>'
-    +(me.o?'':'<div class="row2"><button class="go" data-act="cnsub">SUBMIT</button></div>')+'</div>';
+    +'<div class="msg'+(l&&!l.ok?' bad':'')+'" id="cnWait">'+(c.paused?'PAUSED — wait for the host.':me.o?'Out of entries — watch the screen.':esc(msg))+'</div>'
+    +(me.o?'':'<div class="row2"><button class="go" data-act="cnsub"'+(c.paused?' disabled':'')+'>SUBMIT</button></div>')+'</div>';
 }
 function cnSwap(a,b){ const t=cnOrd[a]; cnOrd[a]=cnOrd[b]; cnOrd[b]=t; }
-function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live') return; const w=new Array(16); cnOrd.forEach((bi,p)=>{ w[bi]=Math.floor(p/4); }); cnPick=-1; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
+function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return; cnSentAt=Date.now(); cnSentK=(st.cn.me&&st.cn.me.l)?st.cn.me.l.k:0; cnFail=null; const w=new Array(16); cnOrd.forEach((bi,p)=>{ w[bi]=Math.floor(p/4); }); cnPick=-1; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
 (function(){ const alt=document.getElementById('alt'); let moved=false;
-  alt.addEventListener('pointerdown',e=>{ const t=e.target.closest('.cnw .tile[data-p]'); if(!t||!st||!st.cn||st.cn.state!=='live') return; e.preventDefault(); moved=false;
+  alt.addEventListener('pointerdown',e=>{ const t=e.target.closest('.cnw .tile[data-p]'); if(!t||!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return; e.preventDefault(); moved=false;
     const r=t.getBoundingClientRect(), g=t.cloneNode(true); g.className='tile ghost'; g.style.cssText+=';position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;z-index:99;pointer-events:none';
     document.body.appendChild(g); t.classList.add('lift'); cnDrag={p:+t.dataset.p,g,dx:e.clientX-r.left,dy:e.clientY-r.top,x0:e.clientX,y0:e.clientY}; });
   document.addEventListener('pointermove',e=>{ if(!cnDrag) return; if(Math.abs(e.clientX-cnDrag.x0)+Math.abs(e.clientY-cnDrag.y0)>8) moved=true; cnDrag.g.style.left=(e.clientX-cnDrag.dx)+'px'; cnDrag.g.style.top=(e.clientY-cnDrag.dy)+'px';
@@ -354,10 +356,10 @@ function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live') return; const w=new A
     if(e.type==='pointerup'){ const el=document.elementFromPoint(e.clientX,e.clientY), t=el&&el.closest('.cnw .tile[data-p]'), q=t?+t.dataset.p:-1;
       if(moved&&q>=0&&q!==d.p){ cnSwap(d.p,q); cnPick=-1; }
       else if(!moved){ if(cnPick<0) cnPick=d.p; else if(cnPick===d.p) cnPick=-1; else { cnSwap(cnPick,d.p); cnPick=-1; } } }
-    render(); };
+    if(cnLate){ cnLate=false; render(); } else cnPaint(); };
   document.addEventListener('pointerup',end); document.addEventListener('pointercancel',end);
 })();
-function cnSend(w){ let n=0; w.forEach((r,i)=>{ n+=r*Math.pow(4,i); }); set(ref(db, base() + '/buzz/' + pid), { round: (st.cn.id+1)*4294967296+n, ts: serverTimestamp() }).catch(()=>{}); }
+function cnSend(w){ let n=0; w.forEach((r,i)=>{ n+=r*Math.pow(4,i); }); set(ref(db, base() + '/buzz/' + pid), { round: (st.cn.id+1)*4294967296+n, ts: serverTimestamp() }).catch(e=>{ cnFail='Firebase would not take that: '+((e&&e.message)||'error'); }); }
 document.getElementById('alt').addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return;
   if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnsub') cnSubmit(); else if(b.dataset.act==='seek') sendSeek();
   try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} });
