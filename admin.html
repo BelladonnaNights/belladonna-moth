@@ -33,6 +33,7 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:12px 0 4px}
 .game.closed>main{display:none}
 .ph .btn{width:120px;flex:none;white-space:nowrap;text-align:center;padding-left:0;padding-right:0}
 .ph>span:first-child{min-width:0}
+#smain .ph{flex-wrap:wrap}#smain .ph .btn{width:auto;padding-left:14px;padding-right:14px}
 main.one{grid-template-columns:1fr}
 .tool{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}.tool>div{flex:1;min-width:240px}
 .tg{display:inline-block;padding:2px 10px;border-radius:99px;border:1px solid var(--border2);font-size:12px;color:var(--text2);background:transparent;margin:0 6px 6px 0;cursor:pointer}.tg.on{border-color:var(--gold);color:var(--gold3);background:rgba(201,168,76,.14)}.tg.s{cursor:default;margin:0;padding:1px 8px;font-size:11px}
@@ -61,6 +62,9 @@ label.l{display:block;font-family:var(--cinzel);font-size:10px;letter-spacing:.1
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
 .hint{font-size:12.5px;color:var(--text3);line-height:1.5}
 .qa{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+#cmodal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:40;padding:16px}#cmodal.on{display:flex}
+#cmodal .box{background:var(--surface);border:1px solid var(--gold);border-radius:14px;width:min(720px,100%);max-height:92vh;overflow:auto;padding:18px}
+#cmodal textarea{min-height:150px}#cmodal h3{font-family:var(--cinzel);font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#000;border:1px solid var(--gold);color:var(--gold2);padding:9px 16px;border-radius:99px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:30}#toast.show{opacity:1}
 .dirty{color:var(--gold2);font-size:12px}
 .rnd{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--surface2)}
@@ -128,6 +132,16 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
 </main>
 </div>
 </div>
+<div id="cmodal"><div class="box">
+  <h3>Connections prompt</h3>
+  <label class="l" style="margin-top:12px">1. Copy this into ChatGPT (change the theme in the first line if you like)</label>
+  <textarea id="cpText" readonly></textarea>
+  <div class="bar" style="margin-top:8px"><button class="btn gold" id="cpCopy">Copy prompt</button></div>
+  <label class="l">2. Paste ChatGPT's answer here</label>
+  <textarea id="cpIn"></textarea>
+  <div class="bar" style="margin-top:8px"><button class="btn gold" id="cpFill">Fill in the puzzle</button><button class="btn" id="cpClose">Close</button></div>
+  <div class="err" id="cpErr"></div>
+</div></div>
 <div id="toast"></div>
 
 <script type="module">
@@ -310,7 +324,7 @@ function cEd(){
    '<label class="l" style="margin-top:0">Puzzle name (what the host sees in the menu)</label><input type="text" id="cnm" maxlength="60" value="'+esc(cdraft.name)+'">'
   +cdraft.groups.map((g,gi)=>'<div class="cg" data-g="'+gi+'"><label class="l" style="margin-top:0">Group '+(gi+1)+' name (shown when the round ends)</label><input type="text" data-f="gname" maxlength="40" value="'+esc(g.name)+'"><div class="w4">'+g.words.map((w,wi)=>'<input type="text" data-f="word" data-w="'+wi+'" maxlength="24" value="'+esc(w)+'">').join('')+'</div></div>').join('')
   +'<p class="hint" style="margin-top:8px">All 16 words must be different. Words show in capital letters on the phones and the TV, so keep them short (up to 24 letters).</p>'
-  +'<div class="bar" style="margin-top:14px"><button class="btn gold" id="csave">Save puzzle</button><span class="sp"></span><button class="btn danger" id="cdel">Delete puzzle</button></div>'
+  +'<div class="bar" style="margin-top:14px"><button class="btn gold" id="csave">Save puzzle</button><button class="btn gold" id="cprompt">Prompt</button><span class="sp"></span><button class="btn danger" id="cdel">Delete puzzle</button></div>'
   +'<div class="err" id="cerr"></div><p class="hint" style="margin-top:6px">Saved puzzles show up in the Moth host app\'s Belladonna Connections screen — it checks for new ones every time you open it.</p>';
 }
 $('#ced').addEventListener('input', e => { if (!cdraft) return; const t = e.target;
@@ -332,6 +346,20 @@ $('#ced').addEventListener('click', async e => {
   if (b.id==='cdel') { if (!confirm('Delete “'+(cdraft.name||'this puzzle')+'” for everyone?')) return;
     try { if (CL[ccur]) await remove(ref(db,'moth/connectionlists/'+ccur)); ccur=null; cdraft=null; cdirty=false; cList(); cEd(); toast('Puzzle deleted'); } catch(err) { $('#cerr').textContent = err.message; } }
 });
+const CP_TEXT = 'Make a Connections puzzle for a bar game night (theme: music and nightlife). I need 4 groups, each with a short group name and exactly 4 single words or very short phrases (up to 24 letters each). All 16 words must be different. Make the groups tricky: a few words should look like they could fit more than one group, but each word belongs to only one.\n\nReply with ONLY this, no extra text:\nPuzzle name\nGroup name: word, word, word, word\nGroup name: word, word, word, word\nGroup name: word, word, word, word\nGroup name: word, word, word, word';
+function cpParse(t){
+  const lines = String(t||'').split(/\r?\n/).map(l=>l.replace(/^[\s*\-\u2022\d.)]+/,'').replace(/\*\*/g,'').trim()).filter(Boolean);
+  const groups = [], head = [];
+  for (const l of lines) { const i = l.indexOf(':'); if (i > 0) { const ws = l.slice(i+1).split(/[,;]/).map(x=>x.trim()).filter(Boolean); if (ws.length === 4) { groups.push({ name:l.slice(0,i).trim(), words:ws }); continue; } } head.push(l); }
+  if (groups.length !== 4) return null;
+  return { name:(head[0]||'').replace(/^(puzzle name|name|title)\s*:\s*/i,''), groups };
+}
+$('#ced').addEventListener('click', e => { if (e.target.id==='cprompt') { $('#cpText').value = CP_TEXT; $('#cpIn').value=''; $('#cpErr').textContent=''; $('#cmodal').classList.add('on'); } });
+$('#cpClose').onclick = () => $('#cmodal').classList.remove('on');
+$('#cmodal').addEventListener('click', e => { if (e.target.id==='cmodal') $('#cmodal').classList.remove('on'); });
+$('#cpCopy').onclick = async () => { try { await navigator.clipboard.writeText(CP_TEXT); toast('Prompt copied'); } catch(e) { $('#cpText').select(); document.execCommand('copy'); toast('Prompt copied'); } };
+$('#cpFill').onclick = () => { const r = cpParse($('#cpIn').value); if (!r) { $('#cpErr').textContent = 'I could not find 4 groups with 4 words each. Paste the answer exactly as ChatGPT gave it.'; return; }
+  if (!cdraft) return; if (r.name) cdraft.name = r.name.slice(0,60); cdraft.groups = r.groups.map(g=>({ name:g.name.slice(0,40), words:g.words.map(w=>w.slice(0,24)) })); cdirty = true; $('#cmodal').classList.remove('on'); cEd(); $('#cdirty').textContent = 'Unsaved changes'; toast('Filled in — check it, then press Save'); };
 /* ── game sections collapse under the game's name (closed by default; the page remembers what you opened) ── */
 const OPEN_KEY = 'moth.admin.open';
 let openGames = {}; try { openGames = JSON.parse(localStorage.getItem(OPEN_KEY) || '{}') || {}; } catch(e){}
