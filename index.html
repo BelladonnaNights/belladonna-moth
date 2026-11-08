@@ -25,6 +25,7 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .go:disabled{opacity:.5}
 #err{color:#ff8a7a;font-size:14px;min-height:20px;margin-top:10px}
 #cnSubWrap{display:none;width:100%;max-width:420px;padding:0 4px;box-sizing:border-box}#cnSubBtn{width:100%;padding:14px 6px;border-radius:12px;border:none;background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);color:#150f02;font:700 15px var(--font,inherit);letter-spacing:.08em;touch-action:manipulation;-webkit-tap-highlight-color:transparent}#cnSubBtn:disabled{opacity:.35}
+#game.cnmode{justify-content:flex-start;overflow-y:auto;gap:6px;padding-bottom:6px}#game.cnmode #alt{padding-top:4px;padding-bottom:0}#cnSubWrap{position:sticky;bottom:0;z-index:5;padding-top:8px;padding-bottom:max(8px,env(safe-area-inset-bottom));background:linear-gradient(to bottom,rgba(5,5,5,0),rgba(5,5,5,.96) 30%)}.cnw .msg{height:20px;min-height:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #game{display:none;width:100%;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:0}
 #wrap{position:relative;display:flex;align-items:center;justify-content:center}
 #buzz{width:min(78vw,52vh);height:min(78vw,52vh);border-radius:50%;border:none;font-family:var(--display);font-size:clamp(48px,16vw,92px);letter-spacing:.06em;
@@ -233,7 +234,7 @@ function fxSync(){
   a.raf=requestAnimationFrame(frame);
 }
 function altRender(md,entered,myVote){
-  const A=document.getElementById('alt'); let h=''; document.getElementById('cnSubWrap').style.display='none';
+  const A=document.getElementById('alt'); let h=''; document.getElementById('cnSubWrap').style.display='none'; document.getElementById('game').classList.remove('cnmode');
   const r=st.raffle||{state:'idle'}, v=st.vote||{state:'idle',options:[]}, M='<img id="altm" src="'+document.querySelector('#join img').src+'" alt="">';
   if(md==='raffle'){
     const me=MYID(), won=r.state==='done'&&r.winner&&r.winner.id===me, winning=r.state==='drawing'&&r.win&&r.win===me, iWin=won||winning;
@@ -340,14 +341,14 @@ function cnPhone(){
   if(!cnLoc||cnLoc.id!==c.id) cnLoc={id:c.id,used:0,tried:new Set(),res:null,k:0};
   const loc=!!c.key, l=loc?cnLoc.res:me.l, used=loc?Math.max(me.m||0,cnLoc.used):me.m, out=loc?(me.o||used>=c.max):me.o, fresh=l&&l.k!==cnSeen; if(fresh){ cnSeen=l.k; cnHide=false; if(!l.ok&&!l.dup) cnShakeT=Date.now()+600; }
   const shake=Date.now()<cnShakeT, left=c.max-used;
-  let msg=''; if(l){ msg=l.ok?'All 16 are right!':l.dup?'You already tried that arrangement — no entry used.':l.n+' of 16 correct'; }
+  let msg=''; if(l){ msg=l.ok?'All 16 are right!':l.dup?'Already tried that — no entry used.':l.n+' of 16 correct'; }
   if(me.s.length>=4||(loc&&cnLoc.res&&cnLoc.res.ok)) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
   const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0,paused:!!c.paused}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
   const rows=[0,1,2,3].map(r=>'<div class="crow"><i>'+(r+1)+'</i><div class="rw">'+[0,1,2,3].map(k=>{ const p=r*4+k, w=c.board[cnOrd[p]]; return '<div class="tile'+(cnPick===p?' on':'')+(cnGlow.has(p)&&Date.now()<cnGlowUntil?' glow':'')+'" data-p="'+p+'" style="font-size:'+cnFs(w)+'">'+esc(w)+'</div>'; }).join('')+'</div></div>').join('');
   const html='<div class="cnw'+(shake?' shake':'')+'">'+ti+tm+'<div class="msg2">Drag the words into rows. Each row is one group.</div><div class="grid">'+rows+'</div>'
     +'<div class="dots">Entries left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
     +'<div class="msg'+(l&&!l.ok?' bad':'')+'" id="cnWait">'+(c.paused?'PAUSED — wait for the host.':out?'Out of entries — watch the screen.':(cnHide?'':esc(msg)))+'</div>'
-    +'</div>'; { const sw=document.getElementById('cnSubWrap'), sb=document.getElementById('cnSubBtn'); sw.style.display=out?'none':'block'; sb.disabled=!!c.paused; return html; }
+    +'</div>'; { const sw=document.getElementById('cnSubWrap'), sb=document.getElementById('cnSubBtn'); sw.style.display=out?'none':'block'; sb.disabled=!!c.paused; document.getElementById('game').classList.add('cnmode'); return html; }
 }
 function cnSwap(a,b){ const t=cnOrd[a]; cnOrd[a]=cnOrd[b]; cnOrd[b]=t; cnHide=true; cnGlow=new Set(); document.querySelectorAll('.cnw .tile.glow').forEach(x=>x.classList.remove('glow')); const m=document.getElementById('cnWait'); if(m&&!(st&&st.cn&&st.cn.paused)){ m.textContent=''; m.classList.remove('bad'); } cnSentAt=0; }
 (function(){ const b=document.getElementById('cnSubBtn'); b.addEventListener('touchend',e=>{ e.preventDefault(); if(!b.disabled) cnSubmit(); },{passive:false}); b.addEventListener('click',()=>{ if(!b.disabled) cnSubmit(); }); })();
