@@ -120,7 +120,7 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
 <div class="game closed" id="g-conn"><button class="gh" data-game="g-conn">Belladonna Connections<span class="car">▸</span></button>
 <main id="cmain">
   <section class="panel"><div class="ph"><span>Puzzles</span><span class="sp"></span><button class="btn sm gold" id="promptCn">Prompt</button><button class="btn sm" id="bulkCn">Bulk</button><button class="btn sm gold" id="newCn">+ New</button></div>
-    <div class="pb"><label class="l" style="margin-top:0">Search by name or tag</label><input type="text" id="cfind"><div id="cdifs" style="margin-top:8px"></div><div id="ctags" style="margin-top:8px"></div><div id="clist" style="margin-top:8px"></div></div></section>
+    <div class="pb"><label class="l" style="margin-top:0">Search by name or tag</label><input type="text" id="cfind"><div style="display:flex;gap:8px;margin-top:8px"><select id="cdifs" style="flex:1;min-width:0;background:#000;border:1px solid var(--border2);border-radius:9px;color:var(--text);padding:9px 11px;font:inherit;font-size:14px"></select><select id="ctags" style="flex:1;min-width:0;background:#000;border:1px solid var(--border2);border-radius:9px;color:var(--text);padding:9px 11px;font:inherit;font-size:14px"></select></div><div id="clist" style="margin-top:8px"></div></div></section>
   <section class="panel"><div class="ph"><span id="cTitle">Puzzle</span><span class="sp"></span><span class="dirty" id="cdirty"></span></div>
     <div class="pb" id="ced"></div></section>
 </main>
@@ -329,16 +329,16 @@ function cstart(){ onValue(ref(db,'moth/connectionlists'), s => { CL = s.val() |
 const cTags = v => (Array.isArray(v.tags) ? v.tags : Object.values(v.tags || {})).map(String);
 function cList(){
   const all = {}; Object.values(CL).forEach(v => cTags(v).forEach(t => all[t] = (all[t]||0)+1));
-  $('#ctags').innerHTML = Object.keys(all).sort().map(t=>'<button class="tg'+(cTag===t?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+' ('+all[t]+')</button>').join('');
-  $('#cdifs').innerHTML = Object.keys(CDIFF).map(k=>'<button class="tg'+(cDif===k?' on':'')+'" data-dif="'+k+'">'+CDIFF[k]+'</button>').join('');
+  if (cTag && !all[cTag]) cTag = ''; $('#ctags').innerHTML = '<option value="">All tags</option>' + Object.keys(all).sort().map(t=>'<option value="'+esc(t)+'"'+(cTag===t?' selected':'')+'>'+esc(t)+' ('+all[t]+')</option>').join('');
+  $('#cdifs').innerHTML = '<option value="">Any difficulty</option>' + Object.keys(CDIFF).map(k=>'<option value="'+k+'"'+(cDif===k?' selected':'')+'>'+CDIFF[k]+'</option>').join('');
   const f = cFind.trim().toLowerCase();
   const ids = Object.keys(CL).sort((a,b)=>String(CL[a].name).localeCompare(String(CL[b].name))).filter(id => { const v = CL[id]; if (cTag && !cTags(v).includes(cTag)) return false; if (cDif && cDiff(v.difficulty) !== cDif) return false; return !f || (String(v.name||'')+' '+cTags(v).join(' ')).toLowerCase().includes(f); });
   const nw = cdraft && ccur && !CL[ccur] && (cdirty || cdraft.name) ? '<div class="pl on" data-id="'+ccur+'"><span class="n">'+esc(cdraft.name||'New puzzle')+'</span><span class="c">not saved</span></div>' : '';
   $('#clist').innerHTML = (ids.length || nw) ? nw + ids.map(id=>'<div class="pl'+(id===ccur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(CL[id].name||'Untitled')+'</span><span class="c">'+CDIFF[cDiff(CL[id].difficulty)]+'</span></div>').join('') : '<div class="empty">'+(Object.keys(CL).length ? 'No puzzles match.' : 'No puzzles yet.<br>Press <b>+ New</b> to make the first one.')+'</div>';
 }
 $('#cfind').addEventListener('input', e => { cFind = e.target.value; cList(); });
-$('#cdifs').addEventListener('click', e => { const b = e.target.closest('[data-dif]'); if (!b) return; cDif = cDif === b.dataset.dif ? '' : b.dataset.dif; cList(); });
-$('#ctags').addEventListener('click', e => { const b = e.target.closest('[data-tag]'); if (!b) return; cTag = cTag === b.dataset.tag ? '' : b.dataset.tag; cList(); });
+$('#cdifs').addEventListener('change', e => { cDif = e.target.value; cList(); });
+$('#ctags').addEventListener('change', e => { cTag = e.target.value; cList(); });
 $('#clist').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r) return; if (cdirty && !confirm('You have unsaved changes to this puzzle. Switch anyway?')) return; cLoad(r.dataset.id); });
 $('#newCn').onclick = () => { if (cdirty && !confirm('You have unsaved changes to this puzzle. Start a new one anyway?')) return; ccur = push(ref(db,'moth/connectionlists')).key; cdraft = { name:'', difficulty:'medium', tagsText:'', groups: cgOf({}) }; cdirty = true; cnew = true; cList(); cEd(); setTimeout(()=>$('#cnm')&&$('#cnm').focus(),30); };
 function cLoad(id){ ccur = id; cnew = false; cdraft = { name: CL[id].name || '', difficulty: cDiff(CL[id].difficulty), tagsText: cTags(CL[id]).join(', '), groups: cgOf(CL[id]) }; cdirty = false; cList(); cEd(); }
