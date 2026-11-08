@@ -24,6 +24,7 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .go{margin-top:6px;width:100%;font-family:var(--display);font-size:30px;letter-spacing:.08em;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);color:#120e02}
 .go:disabled{opacity:.5}
 #err{color:#ff8a7a;font-size:14px;min-height:20px;margin-top:10px}
+#cnSubWrap{display:none;width:100%;max-width:420px;padding:0 4px;box-sizing:border-box}#cnSubBtn{width:100%;padding:14px 6px;border-radius:12px;border:none;background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);color:#150f02;font:700 15px var(--font,inherit);letter-spacing:.08em;touch-action:manipulation;-webkit-tap-highlight-color:transparent}#cnSubBtn:disabled{opacity:.35}
 #game{display:none;width:100%;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:0}
 #wrap{position:relative;display:flex;align-items:center;justify-content:center}
 #buzz{width:min(78vw,52vh);height:min(78vw,52vh);border-radius:50%;border:none;font-family:var(--display);font-size:clamp(48px,16vw,92px);letter-spacing:.06em;
@@ -104,7 +105,7 @@ body.glow::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:5
   <input id="code" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" inputmode="text">
   <input id="nm" maxlength="18" placeholder="Your name" autocomplete="off" autocapitalize="words">
   <button class="go" id="goBtn">Let's play</button><div id="err"></div></div>
- <div id="game"><div id="alt"></div><div id="wrap"><button id="buzz" class="off">BUZZ</button><img id="moth" alt=""></div><div id="msg"></div></div>
+ <div id="game"><div id="alt"></div><div id="cnSubWrap"><button id="cnSubBtn" type="button">SUBMIT</button></div><div id="wrap"><button id="buzz" class="off">BUZZ</button><img id="moth" alt=""></div><div id="msg"></div></div>
 </main>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -232,7 +233,7 @@ function fxSync(){
   a.raf=requestAnimationFrame(frame);
 }
 function altRender(md,entered,myVote){
-  const A=document.getElementById('alt'); let h='';
+  const A=document.getElementById('alt'); let h=''; document.getElementById('cnSubWrap').style.display='none';
   const r=st.raffle||{state:'idle'}, v=st.vote||{state:'idle',options:[]}, M='<img id="altm" src="'+document.querySelector('#join img').src+'" alt="">';
   if(md==='raffle'){
     const me=MYID(), won=r.state==='done'&&r.winner&&r.winner.id===me, winning=r.state==='drawing'&&r.win&&r.win===me, iWin=won||winning;
@@ -343,12 +344,13 @@ function cnPhone(){
   if(me.s.length>=4||(loc&&cnLoc.res&&cnLoc.res.ok)) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
   const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0,paused:!!c.paused}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
   const rows=[0,1,2,3].map(r=>'<div class="crow"><i>'+(r+1)+'</i><div class="rw">'+[0,1,2,3].map(k=>{ const p=r*4+k, w=c.board[cnOrd[p]]; return '<div class="tile'+(cnPick===p?' on':'')+(cnGlow.has(p)&&Date.now()<cnGlowUntil?' glow':'')+'" data-p="'+p+'" style="font-size:'+cnFs(w)+'">'+esc(w)+'</div>'; }).join('')+'</div></div>').join('');
-  return '<div class="cnw'+(shake?' shake':'')+'">'+ti+tm+'<div class="msg2">Drag the words into rows. Each row is one group.</div><div class="grid">'+rows+'</div>'
+  const html='<div class="cnw'+(shake?' shake':'')+'">'+ti+tm+'<div class="msg2">Drag the words into rows. Each row is one group.</div><div class="grid">'+rows+'</div>'
     +'<div class="dots">Entries left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
     +'<div class="msg'+(l&&!l.ok?' bad':'')+'" id="cnWait">'+(c.paused?'PAUSED — wait for the host.':out?'Out of entries — watch the screen.':(cnHide?'':esc(msg)))+'</div>'
-    +(out?'':'<div class="row2"><button class="go" data-act="cnsub"'+(c.paused?' disabled':'')+'>SUBMIT</button></div>')+'</div>';
+    +'</div>'; { const sw=document.getElementById('cnSubWrap'), sb=document.getElementById('cnSubBtn'); sw.style.display=out?'none':'block'; sb.disabled=!!c.paused; return html; }
 }
 function cnSwap(a,b){ const t=cnOrd[a]; cnOrd[a]=cnOrd[b]; cnOrd[b]=t; cnHide=true; cnGlow=new Set(); document.querySelectorAll('.cnw .tile.glow').forEach(x=>x.classList.remove('glow')); const m=document.getElementById('cnWait'); if(m&&!(st&&st.cn&&st.cn.paused)){ m.textContent=''; m.classList.remove('bad'); } cnSentAt=0; }
+(function(){ const b=document.getElementById('cnSubBtn'); b.addEventListener('touchend',e=>{ e.preventDefault(); if(!b.disabled) cnSubmit(); },{passive:false}); b.addEventListener('click',()=>{ if(!b.disabled) cnSubmit(); }); })();
 let cnLastSub=0;
 function cnSubmit(){ if(Date.now()-cnLastSub<500) return; cnLastSub=Date.now(); if(cnDrag){ try{ cnDrag.g.remove(); }catch(_){} cnDrag=null; } if(!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return;
   if(st.cn.key&&cnLoc&&cnLoc.id===st.cn.id){ const rows=[0,1,2,3].map(r=>cnOrd.slice(r*4,r*4+4)), kk=rows.map(r=>r.slice().sort((a,b)=>a-b).join('.')).sort().join('|'), cnt=rows.map(r=>[0,1,2,3].map(g=>r.filter(i=>st.cn.key[i]===g).length));
@@ -369,12 +371,13 @@ function cnSubmit(){ if(Date.now()-cnLastSub<500) return; cnLastSub=Date.now(); 
       else if(!moved){ if(cnPick<0) cnPick=d.p; else if(cnPick===d.p) cnPick=-1; else { cnSwap(cnPick,d.p); cnPick=-1; } } }
     if(cnLate){ cnLate=false; render(); } else cnPaint(); };
   document.addEventListener('pointerup',end); document.addEventListener('pointercancel',end);
+  document.addEventListener('touchend',()=>{ setTimeout(()=>{ if(cnDrag) end({type:'cancel'}); },60); }); document.addEventListener('touchcancel',()=>{ setTimeout(()=>{ if(cnDrag) end({type:'cancel'}); },60); });
 })();
 function cnSend(w){ let n=0; w.forEach((r,i)=>{ n+=r*Math.pow(4,i); }); set(ref(db, base() + '/buzz/' + pid), { round: (st.cn.id+1)*4294967296+n, ts: serverTimestamp() }).catch(e=>{ cnFail='Firebase would not take that: '+((e&&e.message)||'error'); }); }
 document.getElementById('alt').addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return;
-  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnsub'){ if(e.detail===0) cnSubmit(); } else if(b.dataset.act==='seek') sendSeek();
+  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnsub') cnSubmit(); else if(b.dataset.act==='seek') sendSeek();
   try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} });
-function altShow(on){ if(!on){ fxStop(); document.body.classList.remove('glow'); } document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
+function altShow(on){ if(!on){ document.getElementById('cnSubWrap').style.display='none'; fxStop(); document.body.classList.remove('glow'); } document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
 const MYID = () => pid;
 const myVotes = {}; const myVoteFor = id => (id != null && myVotes[id] != null) ? myVotes[id] : (() => { try { const x = JSON.parse(LS.get('moth-vote-' + code) || 'null'); return x && x.vid === id ? x.idx : null; } catch (e) { return null; } })();
 function sendEnter(){ if (!st || !st.raffle) return; set(ref(db, base() + '/raffle/' + pid), { rid: st.raffle.id }).catch(()=>{}); }
