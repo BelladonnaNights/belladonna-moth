@@ -42,6 +42,17 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 #msg b{color:var(--gold2)}
 #alt{display:none;width:100%;max-width:420px;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:28px 4px 12px;overflow:visible}
 #alt>*{flex:none}
+.cnw{width:100%;display:flex;flex-direction:column;gap:8px}
+.cnw .cb{border-radius:10px;padding:9px 6px;color:#12100c;text-align:center}.cnw .cb b{display:block;font-family:var(--cinzel);font-size:12px;letter-spacing:.14em;text-transform:uppercase}.cnw .cb span{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.cg0{background:#c9a84c}.cg1{background:#c4627a}.cg2{background:#3aa39d}.cg3{background:#9677d1}
+.cnw .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cnw .tile{min-height:64px;padding:4px 2px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:var(--cinzel);font-weight:700;font-size:clamp(10px,3.1vw,14px);letter-spacing:.02em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-align:center;word-break:break-word;line-height:1.1}
+.cnw .tile.on{background:rgba(201,168,76,.28);border-color:var(--gold2);color:var(--gold3)}
+.cnw.shake{animation:cnshake .5s}@keyframes cnshake{0%,100%{transform:none}15%{transform:translateX(-9px)}35%{transform:translateX(9px)}55%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.cnw .dots{display:flex;gap:7px;justify-content:center;align-items:center;font-size:13px;color:var(--text2)}.cnw .dots i{width:11px;height:11px;border-radius:50%;background:var(--gold2)}.cnw .dots i.x{background:#3a342a}
+.cnw .msg{min-height:20px;font-size:15px;color:var(--gold3)}.cnw .msg.bad{color:#ffb4a8}
+.cnw .row2{display:flex;gap:8px}.cnw .row2 button{flex:1;padding:13px 6px;border-radius:12px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font:700 15px var(--font,inherit);letter-spacing:.08em}.cnw .row2 button.go{background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);color:#150f02;border:none}.cnw .row2 button:disabled{opacity:.35}
+
 #alt .t{font-family:var(--display);font-size:46px;letter-spacing:.05em;color:var(--gold2);line-height:1}#alt .s{color:var(--text2);font-size:15px;line-height:1.4}#alt img{width:34vw;max-width:150px;filter:drop-shadow(0 0 14px rgba(232,201,106,.5));animation:flutter 1.6s ease-in-out infinite}
 #alt .q{font-family:var(--display);font-size:34px;color:var(--text);letter-spacing:.03em;line-height:1.05}
 #alt .sq{font-family:var(--display);font-size:34px;color:var(--text);letter-spacing:.03em;line-height:1.1;white-space:pre-line}
@@ -249,11 +260,23 @@ function altRender(md,entered,myVote){
         +'<div class="s">'+(open?(myVote==null?'Tap your choice':'Vote counted — tap another to change it'):(v.tie?'Voting closed — it\'s a tie!':v.leaders&&v.leaders.length?'Voting closed — <b>'+esc(v.options[v.leaders[0]].label)+'</b> wins':'Voting closed'))+'</div>';
     } else h=M+'<div class="t">Vote coming up</div><div class="s">Get ready to pick.</div>';
   } else if(md==='distill'){
-    h=M+'<div class="t">Distill</div><div class="s">Listen up and name that song!<br>Watch the big screen.</div>';
+    const z=st.dz||{state:'idle',locked:[]}, me=MYID(), key='d'+z.id, sent=hitSent===key, out=(z.locked||[]).includes(me);
+    if(z.state==='playing'&&!out) h=M.replace('<img','<img style="visibility:hidden"')+'<div class="t">Name that song!</div><button class="abig" data-act="hit"'+(sent?' disabled':'')+'>'+(sent?'…':'BUZZ')+'</button><div class="s">Tap as soon as you know it.</div>';
+    else if(z.state==='playing') h=M.replace('<img','<img class="dimm"')+'<div class="t">Locked out</div><div class="s">You missed this one. Wait for the next song.</div>';
+    else if(z.state==='buzzed'&&z.current&&z.current.id===me) h=M.replace('<img','<img class="glowm"')+'<div class="t">YOU\'RE UP!</div><div class="s">Say your answer out loud.</div>';
+    else if(z.state==='buzzed'&&z.current) h=M.replace('<img','<img class="dimm"')+'<div class="t">'+esc(z.current.name)+'</div><div class="s">buzzed first.</div>';
+    else if(z.state==='revealed') h=M+'<div class="t">Distill</div><div class="s">Song revealed — watch the big screen.</div>';
+    else h=M+'<div class="t">Distill</div><div class="s">'+(out?'You are locked out of this song.':'Get ready — a BUZZ button appears when the music starts.')+'</div>';
+  } else if(md==='connections'){
+    h=cnPhone();
   } else if(md==='tiebreak'){
-    const t=st.tb||{state:'idle'};
+    const t=st.tb||{state:'idle'}, me=MYID(), asked=(t.asks||[]).includes(me), wins=t.win||[];
     if(t.state==='spinning') h=M.replace('<img','<img style="visibility:hidden"')+'<div class="t">The wheel is spinning…</div><div class="s">Watch the big screen!</div>';
-    else if(t.state==='done') h=M+'<div class="t">'+t.landed+'</div><div class="s">'+(t.win==='tie'?'The wheel landed here — still a tie!':'<b>'+esc(t.win==='A'?(t.an||'Player A'):(t.bn||'Player B'))+'</b> wins the tiebreaker')+'</div>';
+    else if(t.state==='done'){ const iWon=wins.some(i=>t.list[i]&&t.list[i].pid===me), names=wins.map(i=>esc(t.list[i].name)).join(' &amp; ');
+      h=M+'<div class="t">'+t.landed+'</div><div class="s">'+(iWon?'<b style="color:var(--gold2)">'+(wins.length>1?'You tied!':'You win!')+'</b><br>':'')+(wins.length>1?'Tie between <b>'+names+'</b> — spin again.':'<b>'+names+'</b> wins the tiebreaker')+'</div>'; }
+    else if(asked){ const key=t.id+'|'+(t.asks||[]).length, mine=tbSent&&tbSent.k===t.id?tbSent.n:null;
+      h=M+'<div class="t">Pick your number</div>'+(mine!=null?'<div class="s">Locked in: <b style="color:var(--gold2);font-size:22px">'+mine+'</b></div><button class="abig" data-act="tbchg" style="font-size:16px">CHANGE</button>'
+        :'<div class="s">Type a number from 1 to 9999.<br>Closest to the wheel wins.</div><input id="tbIn" type="number" inputmode="numeric" min="1" max="9999" placeholder="#" style="width:70%;max-width:260px;background:#000;border:1px solid var(--gold2);border-radius:12px;color:var(--text);font:48px var(--display,inherit);text-align:center;padding:8px;outline:none"><button class="abig" data-act="tbnum" style="font-size:18px">SUBMIT</button>'); }
     else h=M+'<div class="t">Tiebreaker</div><div class="s">Hang tight — the host is getting ready.</div>';
   } else if(md==='seek'){
     const k=st.seek||{state:'idle'}, qs=k.questions||[], mine=mySeekNow(k), me=MYID(), res=(k.results||[]).find(x=>x.id===me), many=qs.length>1;
@@ -279,18 +302,46 @@ function altExtras(md){
   if(md==='mic'&&m&&m.state==='live'&&m.holder&&m.holder.id===me){ glow=true; beat='m'+m.id+'|'+m.passes; }
   if(md==='mic'&&m&&m.state==='done'&&m.winner&&m.winner.id===me) glow=true;
   if(md==='catch'&&c&&c.state==='won'&&c.winner&&c.winner.id===me) beat='c'+c.id;
+  if(md==='distill'&&st.dz&&st.dz.state==='buzzed'&&st.dz.current&&st.dz.current.id===me) glow=true;
   document.body.classList.toggle('glow',glow);
   if(beat&&beat!==lastBeat){ try{ navigator.vibrate&&navigator.vibrate([80,50,80,50,160]); }catch(_){} } lastBeat=beat;
 }
 function sendHit(){
-  const md=st&&st.mode, id=md==='mic'&&st.mic?st.mic.id:md==='catch'&&st.catch?st.catch.id:null; if(id==null) return;
-  const key=md==='mic'?'m'+id+'|'+st.mic.passes:'c'+id; if(hitSent===key) return; hitSent=key; hitRaw(id); render();
+  const md=st&&st.mode, id=md==='mic'&&st.mic?st.mic.id:md==='catch'&&st.catch?st.catch.id:md==='distill'&&st.dz?st.dz.id:null; if(id==null) return;
+  const key=md==='mic'?'m'+id+'|'+st.mic.passes:md==='distill'?'d'+id:'c'+id; if(hitSent===key) return; hitSent=key; hitRaw(id); render();
 }
 
 function hitRaw(id){ set(ref(db, base() + '/buzz/' + pid), { round: id, ts: serverTimestamp() }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} }
 
+let tbSent=null;
+function sendTbNum(){ const el=document.getElementById('tbIn'); if(!el||!st||!st.tb) return; const n=parseInt(el.value,10); if(!(n>=1&&n<=9999)){ el.style.borderColor='#c0392b'; return; } tbSent={k:st.tb.id,n}; set(ref(db, base() + '/buzz/' + pid), { round: (st.tb.id+1)*10000+n, ts: serverTimestamp() }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
+function tbChange(){ tbSent=null; render(); }
+document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='tbIn') sendTbNum(); });
+let cnSel=[],cnId=null,cnSeen=0,cnShakeT=0;
+function cnPhone(){
+  const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=c.me||(c.p&&c.p[me0])||{s:[],m:0,o:false,l:null}, M='<img src="/moth.png" alt="" id="altm">';
+  if(c.id!==cnId){ cnId=c.id; cnSel=[]; cnSeen=me.l?me.l.k:0; }
+  if(c.state==='idle') return M+'<div class="t">Connections</div><div class="s">Get ready to sort the words.<br>Watch the big screen.</div>';
+  if(c.state==='done'){ const w=c.winner, mine=w&&w.id===me0;
+    return M+'<div class="t">'+(mine?'You win!':w?'Round over':'No winner')+'</div><div class="s">'+(w?(mine?'You sorted all 4 groups first.':'<b>'+esc(w.name)+'</b> sorted all 4 groups first.'):'Nobody sorted all 4 groups.')+'</div>'
+      +'<div class="cnw">'+(c.groups||[]).map((g,gi)=>'<div class="cb cg'+gi+'"><b>'+esc(g.name)+'</b><span>'+g.words.map(esc).join(' · ')+'</span></div>').join('')+'</div>'; }
+  const solved=new Set(me.s.flatMap(s=>s.i)), l=me.l, fresh=l&&l.k!==cnSeen; if(fresh) cnSeen=l.k;
+  if(fresh&&!l.ok) cnShakeT=Date.now()+600; const shake=Date.now()<cnShakeT, left=c.max-me.m;
+  let msg=''; if(l){ msg=l.ok?'Got one!':l.dup?'You already tried that one.':'Not quite — '+l.n+' of 4 are in the same group.'; }
+  const banners=me.s.map(s=>'<div class="cb cg'+s.g+'"><b>'+esc(s.name)+'</b><span>'+s.i.map(i=>esc(c.board[i])).join(' · ')+'</span></div>').join('');
+  if(me.s.length>=4) return M+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div><div class="cnw">'+banners+'</div>';
+  const tiles=c.board.map((w,i)=>solved.has(i)?'':'<button class="tile'+(cnSel.includes(i)?' on':'')+'" data-act="cnpick" data-i="'+i+'"'+(me.o?' disabled':'')+'>'+esc(w)+'</button>').join('');
+  return '<div class="cnw'+(shake?' shake':'')+'">'+banners+'<div class="grid">'+tiles+'</div>'
+    +'<div class="dots">Mistakes left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
+    +'<div class="msg'+(l&&!l.ok?' bad':'')+'">'+(me.o?'Out of mistakes — watch the screen.':esc(msg))+'</div>'
+    +(me.o?'':'<div class="row2"><button data-act="cnclr"'+(cnSel.length?'':' disabled')+'>CLEAR</button><button class="go" data-act="cnsub"'+(cnSel.length===4?'':' disabled')+'>SUBMIT</button></div>')+'</div>';
+}
+function cnPick(i){ const k=cnSel.indexOf(i); if(k>=0) cnSel.splice(k,1); else if(cnSel.length<4) cnSel.push(i); render(); }
+function cnClear(){ cnSel=[]; render(); }
+function cnSubmit(){ if(cnSel.length!==4||!st||!st.cn||st.cn.state!=='live') return; const w=cnSel.slice(); cnSel=[]; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
+function cnSend(w){ const n=w[0]|(w[1]<<4)|(w[2]<<8)|(w[3]<<12); set(ref(db, base() + '/buzz/' + pid), { round: (st.cn.id+1)*1000000+n, ts: serverTimestamp() }).catch(()=>{}); }
 document.getElementById('alt').addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return;
-  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='seek') sendSeek();
+  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnpick') cnPick(Number(b.dataset.i)); else if(b.dataset.act==='cnclr') cnClear(); else if(b.dataset.act==='cnsub') cnSubmit(); else if(b.dataset.act==='seek') sendSeek();
   try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} });
 function altShow(on){ if(!on){ fxStop(); document.body.classList.remove('glow'); } document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
 const MYID = () => pid;
