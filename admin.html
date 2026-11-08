@@ -33,6 +33,7 @@ main{display:grid;grid-template-columns:320px 1fr;gap:16px;padding:12px 0 4px}
 .game.closed>main{display:none}
 .ph .btn{width:120px;flex:none;white-space:nowrap;text-align:center;padding-left:0;padding-right:0}
 .ph>span:first-child{min-width:0}
+#cmain .cplr{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--surface2);cursor:pointer}#cmain .cplr .n{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cmain .cplr .c{color:var(--text3);font-size:12px}#cmain .cplr input{width:auto}
 #smain .ph,#cmain .ph{flex-wrap:wrap}#smain .ph .btn,#cmain .ph .btn{width:auto;padding-left:14px;padding-right:14px}#cmain .ph>span:first-child{flex:0 0 auto}
 main.one{grid-template-columns:1fr}
 .tool{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}.tool>div{flex:1;min-width:240px}
@@ -122,7 +123,8 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
   <section class="panel"><div class="ph"><span>Puzzles</span><span class="sp"></span><button class="btn sm gold" id="promptCn">Prompt</button><button class="btn sm" id="bulkCn">Bulk</button><button class="btn sm gold" id="newCn">+ New</button></div>
     <div class="pb"><label class="l" style="margin-top:0">Search by name or tag</label><input type="text" id="cfind"><div style="display:flex;gap:8px;margin-top:8px"><select id="cdifs" style="flex:1;min-width:0;background:#000;border:1px solid var(--border2);border-radius:9px;color:var(--text);padding:9px 11px;font:inherit;font-size:14px"></select><select id="ctags" style="flex:1;min-width:0;background:#000;border:1px solid var(--border2);border-radius:9px;color:var(--text);padding:9px 11px;font:inherit;font-size:14px"></select></div><div id="clist" style="margin-top:8px"></div></div></section>
   <section class="panel"><div class="ph"><span id="cTitle">Puzzle</span><span class="sp"></span><span class="dirty" id="cdirty"></span></div>
-    <div class="pb" id="ced"></div></section>
+    <div class="pb" id="ced"></div></section>  <section class="panel" style="grid-column:1/-1"><div class="ph"><span>Playlists</span><span class="sp"></span><button class="btn sm gold" id="newCpl">+ New playlist</button></div>
+    <div class="pb"><p class="hint" style="margin:0 0 10px">A playlist is a group of puzzles. A puzzle can be in as many playlists as you like. In the Moth host app you can open a playlist and add all of it, or only the puzzles you pick.</p><div id="cpls"></div><div id="cpled"></div></div></section>
 </main>
 </div>
 <div class="game closed" id="g-seek"><button class="gh" data-game="g-seek">Belladonna Seek<span class="car">▸</span></button>
@@ -322,12 +324,14 @@ $('#ded').addEventListener('click', async e => {
     try { if (DLs[dcur]) await remove(ref(db,'moth/distilllists/'+dcur)); dcur=null; ddraft=null; ddirty=false; dListR(); dEd(); toast('Distill list deleted'); } catch(err) { $('#derr').textContent = err.message; } }
 });
 /* ── Belladonna Connections puzzles (moth/connectionlists) — 4 named groups of 4 words; the Moth host app loads them into its Connections screen ── */
+let CPL = {}, cplCur = null, cpld = null, cpldirty = false, cplFind = '';
 let CL = {}, ccur = null, cdraft = null, cdirty = false, cnew = false, cFind = '', cTag = '', cDif = '';
 const CDIFF = { easy:'Easy', medium:'Medium', hard:'Hard' }, cDiff = d => CDIFF[String(d||'').toLowerCase()] ? String(d).toLowerCase() : 'medium';
 const cgOf = v => { const gs = (Array.isArray(v.groups) ? v.groups : Object.values(v.groups || {})).map(g => ({ name: String((g && g.name) || ''), words: (Array.isArray(g && g.words) ? g.words : Object.values((g && g.words) || {})).map(String) })); while (gs.length < 4) gs.push({ name:'', words:[] }); return gs.slice(0,4).map(g => { const w = g.words.slice(0,4); while (w.length < 4) w.push(''); return { name:g.name, words:w }; }); };
-function cstart(){ onValue(ref(db,'moth/connectionlists'), s => { CL = s.val() || {}; const pr = CL._prompt; delete CL._prompt; CP_TEXT = pr && typeof pr.text==='string' && pr.text.trim() ? pr.text : CP_DEFAULT; cList(); if (ccur && !cdirty && !cnew) { if (CL[ccur]) cLoad(ccur); else { ccur = null; cdraft = null; cEd(); } } }); cEd(); }
+function cstart(){ onValue(ref(db,'moth/connectionlists'), s => { CL = s.val() || {}; CPL = CL._playlists || {}; delete CL._playlists; const pr = CL._prompt; delete CL._prompt; CP_TEXT = pr && typeof pr.text==='string' && pr.text.trim() ? pr.text : CP_DEFAULT; cList(); if (ccur && !cdirty && !cnew) { if (CL[ccur]) cLoad(ccur); else { ccur = null; cdraft = null; cEd(); } } }); cEd(); }
 const cTags = v => (Array.isArray(v.tags) ? v.tags : Object.values(v.tags || {})).map(String);
 function cList(){
+  cplList(); if (!cpldirty) cplEd();
   const all = {}; Object.values(CL).forEach(v => cTags(v).forEach(t => all[t] = (all[t]||0)+1));
   if (cTag && !all[cTag]) cTag = ''; $('#ctags').innerHTML = '<option value="">All tags</option>' + Object.keys(all).sort().map(t=>'<option value="'+esc(t)+'"'+(cTag===t?' selected':'')+'>'+esc(t)+' ('+all[t]+')</option>').join('');
   $('#cdifs').innerHTML = '<option value="">Any difficulty</option>' + Object.keys(CDIFF).map(k=>'<option value="'+k+'"'+(cDif===k?' selected':'')+'>'+CDIFF[k]+'</option>').join('');
@@ -336,6 +340,38 @@ function cList(){
   const nw = cdraft && ccur && !CL[ccur] && (cdirty || cdraft.name) ? '<div class="pl on" data-id="'+ccur+'"><span class="n">'+esc(cdraft.name||'New puzzle')+'</span><span class="c">not saved</span></div>' : '';
   $('#clist').innerHTML = (ids.length || nw) ? nw + ids.map(id=>'<div class="pl'+(id===ccur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(CL[id].name||'Untitled')+'</span><span class="c">'+CDIFF[cDiff(CL[id].difficulty)]+'</span></div>').join('') : '<div class="empty">'+(Object.keys(CL).length ? 'No puzzles match.' : 'No puzzles yet.<br>Press <b>+ New</b> to make the first one.')+'</div>';
 }
+const cplIds = v => (Array.isArray(v && v.ids) ? v.ids : Object.values((v && v.ids) || {})).map(String);
+function cplList(){
+  const ids = Object.keys(CPL).sort((a,b)=>String(CPL[a].name).localeCompare(String(CPL[b].name)));
+  const nw = cpld && cplCur && !CPL[cplCur] ? '<div class="pl on" data-id="'+cplCur+'"><span class="n">'+esc(cpld.name||'New playlist')+'</span><span class="c">not saved</span></div>' : '';
+  $('#cpls').innerHTML = (ids.length || nw) ? nw + ids.map(id=>'<div class="pl'+(id===cplCur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(CPL[id].name||'Untitled')+'</span><span class="c">'+cplIds(CPL[id]).filter(p=>CL[p]).length+' puzzles</span></div>').join('') : '<div class="empty">No playlists yet.<br>Press <b>+ New playlist</b> to make the first one.</div>';
+}
+function cplRows(){
+  const f = cplFind.trim().toLowerCase(), ids = Object.keys(CL).sort((a,b)=>String(CL[a].name).localeCompare(String(CL[b].name))).filter(id => !f || (String(CL[id].name||'')+' '+cTags(CL[id]).join(' ')).toLowerCase().includes(f));
+  $('#cplrows').innerHTML = ids.length ? ids.map(id=>'<label class="cplr"><input type="checkbox" data-pid="'+id+'"'+(cpld.ids.includes(id)?' checked':'')+'><span class="n">'+esc(CL[id].name||'Untitled')+'</span><span class="c">'+CDIFF[cDiff(CL[id].difficulty)]+(cTags(CL[id]).length?' · '+esc(cTags(CL[id]).join(', ')):'')+'</span></label>').join('') : '<div class="empty">No puzzles match.</div>';
+  $('#cplcount').textContent = cpld.ids.filter(p=>CL[p]).length + ' puzzles in this playlist';
+}
+function cplEd(){
+  const box = $('#cpled'); if (!cpld) { box.innerHTML=''; return; }
+  box.innerHTML = '<label class="l">Playlist name</label><input type="text" id="cplnm" maxlength="60" value="'+esc(cpld.name)+'">'
+   +'<label class="l">Pick the puzzles in this playlist</label><input type="text" id="cplf" value="'+esc(cplFind)+'"><div class="bar" style="margin-top:8px"><button class="btn sm" id="cplall">Select all shown</button><button class="btn sm" id="cplnone">Clear all shown</button><span class="sp"></span><span class="hint" id="cplcount"></span></div>'
+   +'<div id="cplrows" style="margin-top:8px"></div>'
+   +'<div class="bar" style="margin-top:14px"><button class="btn gold" id="cplsave">Save playlist</button><span class="sp"></span><button class="btn danger" id="cpldel">Delete playlist</button></div><div class="err" id="cplerr"></div>';
+  cplRows();
+}
+$('#cpls').addEventListener('click', e => { const r = e.target.closest('.pl'); if (!r) return; if (cpldirty && !confirm('You have unsaved changes to this playlist. Switch anyway?')) return; cplCur = r.dataset.id; cpld = CPL[cplCur] ? { name: CPL[cplCur].name||'', ids: cplIds(CPL[cplCur]) } : cpld; cpldirty = false; cplFind=''; cplList(); cplEd(); });
+$('#newCpl').onclick = () => { if (cpldirty && !confirm('You have unsaved changes to this playlist. Start a new one anyway?')) return; cplCur = push(ref(db,'moth/connectionlists/_playlists')).key; cpld = { name:'', ids:[] }; cpldirty = true; cplFind=''; cplList(); cplEd(); setTimeout(()=>$('#cplnm')&&$('#cplnm').focus(),30); };
+$('#cpled').addEventListener('input', e => { if (!cpld) return; const t = e.target;
+  if (t.id==='cplnm') { cpld.name = t.value; cpldirty = true; }
+  else if (t.id==='cplf') { cplFind = t.value; cplRows(); }
+  else if (t.dataset.pid) { const i = cpld.ids.indexOf(t.dataset.pid); if (t.checked && i<0) cpld.ids.push(t.dataset.pid); if (!t.checked && i>=0) cpld.ids.splice(i,1); cpldirty = true; $('#cplcount').textContent = cpld.ids.filter(p=>CL[p]).length + ' puzzles in this playlist'; } });
+$('#cpled').addEventListener('click', async e => { const b = e.target.closest('button'); if (!b || !cpld) return;
+  if (b.id==='cplall' || b.id==='cplnone') { document.querySelectorAll('#cplrows input[data-pid]').forEach(i => { const p = i.dataset.pid, k = cpld.ids.indexOf(p); if (b.id==='cplall' && k<0) cpld.ids.push(p); if (b.id==='cplnone' && k>=0) cpld.ids.splice(k,1); }); cpldirty = true; cplRows(); }
+  if (b.id==='cplsave') { const name = (cpld.name||'').replace(/\s+/g,' ').trim(); if (!name) { $('#cplerr').textContent='Give the playlist a name first.'; return; }
+    try { const ids = cpld.ids.filter(p=>CL[p]); await set(ref(db,'moth/connectionlists/_playlists/'+cplCur), { name, ids, updatedAt: serverTimestamp() }); CPL[cplCur] = { name, ids }; cpld = { name, ids: ids.slice() }; cpldirty = false; cplList(); cplEd(); toast('Saved “'+name+'”'); }
+    catch(err) { $('#cplerr').textContent = /permission/i.test(err.message) ? 'Firebase said no — check your login is in the admins list.' : (err.message||'Could not save'); } }
+  if (b.id==='cpldel') { if (!confirm('Delete the playlist “'+(cpld.name||'this playlist')+'”? The puzzles stay.')) return;
+    try { if (CPL[cplCur]) await remove(ref(db,'moth/connectionlists/_playlists/'+cplCur)); cplCur=null; cpld=null; cpldirty=false; cplList(); cplEd(); toast('Playlist deleted'); } catch(err) { $('#cplerr').textContent = err.message; } } });
 $('#cfind').addEventListener('input', e => { cFind = e.target.value; cList(); });
 $('#cdifs').addEventListener('change', e => { cDif = e.target.value; cList(); });
 $('#ctags').addEventListener('change', e => { cTag = e.target.value; cList(); });
