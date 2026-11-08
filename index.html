@@ -320,12 +320,12 @@ let tbSent=null;
 function sendTbNum(){ const el=document.getElementById('tbIn'); if(!el||!st||!st.tb) return; const n=parseInt(el.value,10); if(!(n>=1&&n<=9999)){ el.style.borderColor='#c0392b'; return; } tbSent={k:st.tb.id,n}; set(ref(db, base() + '/buzz/' + pid), { round: (st.tb.id+1)*10000+n, ts: serverTimestamp() }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
 function tbChange(){ tbSent=null; render(); }
 document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='tbIn') sendTbNum(); });
-let cnHide=false,cnOrd=[],cnId=null,cnSeen=0,cnShakeT=0,cnDrag=null,cnPick=-1,cnTmT=null,cnRef={at:0,left:0,paused:false},cnLate=false,cnSentAt=0,cnSentK=0,cnFail=null;
+let cnLoc=null,cnHide=false,cnOrd=[],cnId=null,cnSeen=0,cnShakeT=0,cnDrag=null,cnPick=-1,cnTmT=null,cnRef={at:0,left:0,paused:false},cnLate=false,cnSentAt=0,cnSentK=0,cnFail=null;
 function cnPaint(){ if(!st||!st.cn) return; document.querySelectorAll('.cnw .tile[data-p]').forEach(t=>{ const p=+t.dataset.p, w=st.cn.board[cnOrd[p]]; if(w==null) return; if(t.textContent!==w) t.textContent=w; t.style.fontSize=cnFs(w); t.classList.toggle('on',cnPick===p); }); }
 function cnFs(w){ const n=String(w).length; return n>14?'8px':n>9?'9px':n>7?'10.5px':'14px'; }
 function cnTick(){ const el=document.getElementById('cnTm'); if(!el){ clearInterval(cnTmT); cnTmT=null; return; } const l=Math.max(0,cnRef.left-(cnRef.paused?0:performance.now()-cnRef.at)), s=Math.ceil(l/1000); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); el.classList.toggle('low',s<=10&&l>0); }
 let cnWT=null;
-function cnWait(){ const m=document.getElementById('cnWait'); if(m&&cnSentAt&&st&&st.cn){ const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}, k=mm.l?mm.l.k:0; if(k!==cnSentK) cnSentAt=0; else if(!st.cn.paused){ if(!(st.bv>=2)){ m.classList.add('bad'); m.textContent='The Moth app on the host computer needs the new server.js and bridge.js. Replace them and restart the app.'; return; } m.classList.add('bad'); m.textContent=cnFail||(Date.now()-cnSentAt>4000?'No answer came back. Check the Moth app is open and updated (server.js and bridge.js), then press SUBMIT again.':''); } } if(!cnSentAt){ clearInterval(cnWT); cnWT=null; } }
+function cnWait(){ const m=document.getElementById('cnWait'); if(st&&st.cn&&st.cn.key) cnSentAt=0; if(m&&cnSentAt&&st&&st.cn){ const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}, k=mm.l?mm.l.k:0; if(k!==cnSentK) cnSentAt=0; else if(!st.cn.paused){ if(!(st.bv>=2)){ m.classList.add('bad'); m.textContent='The Moth app on the host computer needs the new server.js and bridge.js. Replace them and restart the app.'; return; } m.classList.add('bad'); m.textContent=cnFail||(Date.now()-cnSentAt>4000?'No answer came back. Check the Moth app is open and updated (server.js and bridge.js), then press SUBMIT again.':''); } } if(!cnSentAt){ clearInterval(cnWT); cnWT=null; } }
 function cnPhone(){
   const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=c.me||(c.p&&c.p[me0])||{s:[],m:0,o:false,l:null}, M='<img src="'+document.querySelector('#join img').src+'" alt="" id="altm">';
   if(c.id!==cnId){ cnId=c.id; cnOrd=Array.from({length:16},(_,i)=>i); cnPick=-1; cnSeen=me.l?me.l.k:0; }
@@ -334,19 +334,23 @@ function cnPhone(){
   if(c.state==='done'){ const w=c.winner, mine=w&&w.id===me0;
     return M+ti+'<div class="t">'+(mine?'You win!':w?'Round over':'No winner')+'</div><div class="s">'+(w?(mine?'You sorted all 4 groups first.':'<b>'+esc(w.name)+'</b> sorted all 4 groups first.'):'Nobody sorted all 4 groups.')+'</div>'
       +'<div class="cnw">'+(c.groups||[]).map((g,gi)=>'<div class="cb cg'+gi+'"><b>'+esc(g.name)+'</b><span>'+g.words.map(esc).join(' · ')+'</span></div>').join('')+'</div>'; }
-  const l=me.l, fresh=l&&l.k!==cnSeen; if(fresh){ cnSeen=l.k; cnHide=false; }
-  if(fresh&&!l.ok) cnShakeT=Date.now()+600; const shake=Date.now()<cnShakeT, left=c.max-me.m;
+  if(!cnLoc||cnLoc.id!==c.id) cnLoc={id:c.id,used:0,tried:new Set(),res:null,k:0};
+  const loc=!!c.key, l=loc?cnLoc.res:me.l, used=loc?Math.max(me.m||0,cnLoc.used):me.m, out=loc?(me.o||used>=c.max):me.o, fresh=l&&l.k!==cnSeen; if(fresh){ cnSeen=l.k; cnHide=false; if(!l.ok&&!l.dup) cnShakeT=Date.now()+600; }
+  const shake=Date.now()<cnShakeT, left=c.max-used;
   let msg=''; if(l){ msg=l.ok?'All 16 are right!':l.dup?'You already tried that arrangement — no entry used.':l.n+' of 16 correct'; }
-  if(me.s.length>=4) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
+  if(me.s.length>=4||(loc&&cnLoc.res&&cnLoc.res.ok)) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
   const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0,paused:!!c.paused}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
   const rows=[0,1,2,3].map(r=>'<div class="crow"><i>'+(r+1)+'</i><div class="rw">'+[0,1,2,3].map(k=>{ const p=r*4+k, w=c.board[cnOrd[p]]; return '<div class="tile'+(cnPick===p?' on':'')+'" data-p="'+p+'" style="font-size:'+cnFs(w)+'">'+esc(w)+'</div>'; }).join('')+'</div></div>').join('');
   return '<div class="cnw'+(shake?' shake':'')+'">'+ti+tm+'<div class="msg2">Drag the words into rows. Each row is one group.</div><div class="grid">'+rows+'</div>'
     +'<div class="dots">Entries left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
-    +'<div class="msg'+(l&&!l.ok?' bad':'')+'" id="cnWait">'+(c.paused?'PAUSED — wait for the host.':me.o?'Out of entries — watch the screen.':(cnHide?'':esc(msg)))+'</div>'
-    +(me.o?'':'<div class="row2"><button class="go" data-act="cnsub"'+(c.paused?' disabled':'')+'>SUBMIT</button></div>')+'</div>';
+    +'<div class="msg'+(l&&!l.ok?' bad':'')+'" id="cnWait">'+(c.paused?'PAUSED — wait for the host.':out?'Out of entries — watch the screen.':(cnHide?'':esc(msg)))+'</div>'
+    +(out?'':'<div class="row2"><button class="go" data-act="cnsub"'+(c.paused?' disabled':'')+'>SUBMIT</button></div>')+'</div>';
 }
 function cnSwap(a,b){ const t=cnOrd[a]; cnOrd[a]=cnOrd[b]; cnOrd[b]=t; cnHide=true; const m=document.getElementById('cnWait'); if(m&&!(st&&st.cn&&st.cn.paused)){ m.textContent=''; m.classList.remove('bad'); } cnSentAt=0; }
-function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return; cnSentAt=Date.now(); { const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}; cnSentK=mm.l?mm.l.k:0; } cnFail=null; const w=new Array(16); cnOrd.forEach((bi,p)=>{ w[bi]=Math.floor(p/4); }); cnPick=-1; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); clearInterval(cnWT); cnWT=setInterval(cnWait,400); cnWait(); }
+function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return;
+  if(st.cn.key&&cnLoc&&cnLoc.id===st.cn.id){ const rows=[0,1,2,3].map(r=>cnOrd.slice(r*4,r*4+4)), kk=rows.map(r=>r.slice().sort((a,b)=>a-b).join('.')).sort().join('|'), cnt=rows.map(r=>[0,1,2,3].map(g=>r.filter(i=>st.cn.key[i]===g).length));
+    const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}; if(Math.max(mm.m||0,cnLoc.used)>=st.cn.max) return;
+    if(cnLoc.tried.has(kk)) cnLoc.res={dup:true,k:++cnLoc.k}; else { cnLoc.tried.add(kk); let n=0; const pm=(a,u)=>{ if(a.length===4){ n=Math.max(n,a.reduce((s,g,ri)=>s+cnt[ri][g],0)); return; } for(let g=0;g<4;g++) if(!u.has(g)){ u.add(g); a.push(g); pm(a,u); a.pop(); u.delete(g); } }; pm([],new Set()); if(n<16) cnLoc.used++; cnLoc.res={ok:n===16,n,k:++cnLoc.k}; } } cnSentAt=Date.now(); { const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}; cnSentK=mm.l?mm.l.k:0; } cnFail=null; const w=new Array(16); cnOrd.forEach((bi,p)=>{ w[bi]=Math.floor(p/4); }); cnPick=-1; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); clearInterval(cnWT); cnWT=setInterval(cnWait,400); cnWait(); }
 (function(){ const alt=document.getElementById('alt'); let moved=false, subDown=false;
   alt.addEventListener('pointerdown',e=>{ subDown=!!e.target.closest('[data-act=cnsub]'); });
   document.addEventListener('pointerup',e=>{ if(!subDown) return; subDown=false; const el=document.elementFromPoint(e.clientX,e.clientY), b=el&&el.closest('[data-act=cnsub]'); if(b&&!b.disabled) cnSubmit(); });
