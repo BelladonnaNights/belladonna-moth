@@ -331,7 +331,7 @@ function cnTick(){ const el=document.getElementById('cnTm'); if(!el){ clearInter
 let cnWT=null;
 function cnWait(){ const m=document.getElementById('cnWait'); if(st&&st.cn&&st.cn.key) cnSentAt=0; if(m&&cnSentAt&&st&&st.cn){ const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}, k=mm.l?mm.l.k:0; if(k!==cnSentK) cnSentAt=0; else if(!st.cn.paused){ if(!(st.bv>=2)){ m.classList.add('bad'); m.textContent='The Moth app on the host computer needs the new server.js and bridge.js. Replace them and restart the app.'; return; } m.classList.add('bad'); m.textContent=cnFail||(Date.now()-cnSentAt>4000?'No answer came back. Check the Moth app is open and updated (server.js and bridge.js), then press SUBMIT again.':''); } } if(!cnSentAt){ clearInterval(cnWT); cnWT=null; } }
 function cnPhone(){
-  const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=c.me||(c.p&&c.p[me0])||{s:[],m:0,o:false,l:null}, M='<img src="'+document.querySelector('#join img').src+'" alt="" id="altm">';
+  const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=Object.assign({s:[],m:0,o:false,l:null},c.me||(c.p&&c.p[me0])||{}), M='<img src="'+document.querySelector('#join img').src+'" alt="" id="altm">';
   if(c.id!==cnId){ cnId=c.id; cnOrd=Array.from({length:16},(_,i)=>i); cnPick=-1; cnSeen=me.l?me.l.k:0; }
   if(c.state==='idle') return M+'<div class="t">Connections</div><div class="s">Get ready to sort the words.<br>Watch the big screen.</div>';
   const ti='<div class="cnti">'+esc(c.name||'')+'</div>';
@@ -342,6 +342,7 @@ function cnPhone(){
   const loc=!!c.key, l=loc?cnLoc.res:me.l, used=loc?Math.max(me.m||0,cnLoc.used):me.m, out=loc?(me.o||used>=c.max):me.o, fresh=l&&l.k!==cnSeen; if(fresh){ cnSeen=l.k; cnHide=false; if(!l.ok&&!l.dup) cnShakeT=Date.now()+600; }
   const shake=Date.now()<cnShakeT, left=c.max-used;
   let msg=''; if(l){ msg=l.ok?'All 16 are right!':l.dup?'Already tried that — no entry used.':l.n+' of 16 correct'; }
+  if(!Array.isArray(me.s)) me.s=Object.values(me.s||{});
   if(me.s.length>=4||(loc&&cnLoc.res&&cnLoc.res.ok)) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
   const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0,paused:!!c.paused}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
   const rows=[0,1,2,3].map(r=>'<div class="crow"><i>'+(r+1)+'</i><div class="rw">'+[0,1,2,3].map(k=>{ const p=r*4+k, w=c.board[cnOrd[p]]; return '<div class="tile'+(cnPick===p?' on':'')+(cnGlow.has(p)&&Date.now()<cnGlowUntil?' glow':'')+'" data-p="'+p+'" style="font-size:'+cnFs(w)+'">'+esc(w)+'</div>'; }).join('')+'</div></div>').join('');
