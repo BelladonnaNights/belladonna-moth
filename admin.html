@@ -120,7 +120,7 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
 <div class="game closed" id="g-conn"><button class="gh" data-game="g-conn">Belladonna Connections<span class="car">▸</span></button>
 <main id="cmain">
   <section class="panel"><div class="ph"><span>Puzzles</span><span class="sp"></span><button class="btn sm" id="bulkCn">Bulk</button><button class="btn sm gold" id="newCn">+ New</button></div>
-    <div class="pb" id="clist"></div></section>
+    <div class="pb"><label class="l" style="margin-top:0">Search by name or tag</label><input type="text" id="cfind"><div id="cdifs" style="margin-top:8px"></div><div id="ctags" style="margin-top:8px"></div><div id="clist" style="margin-top:8px"></div></div></section>
   <section class="panel"><div class="ph"><span id="cTitle">Puzzle</span><span class="sp"></span><span class="dirty" id="cdirty"></span></div>
     <div class="pb" id="ced"></div></section>
 </main>
@@ -135,17 +135,17 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
 <div id="cmodal"><div class="box">
   <h3>Connections prompt</h3>
   <label class="l" style="margin-top:12px">1. Copy this into ChatGPT (change the theme in the first line if you like)</label>
-  <textarea id="cpText" readonly></textarea>
-  <div class="bar" style="margin-top:8px"><button class="btn gold" id="cpCopy">Copy prompt</button></div>
-  <label class="l">2. Paste ChatGPT's answer here</label>
+  <textarea id="cpText"></textarea>
+  <div class="bar" style="margin-top:8px"><button class="btn gold" id="cpCopy">Copy prompt</button><button class="btn" id="cpSave">Save prompt</button><button class="btn" id="cpReset">Reset to original</button></div><p class="hint" style="margin-top:6px">You can edit this text. Press Save prompt to keep your version for next time.</p>
+  <label class="l">2. Paste ChatGPT's answer here (one puzzle fills the form; several puzzles are all saved at once)</label>
   <textarea id="cpIn"></textarea>
   <div class="bar" style="margin-top:8px"><button class="btn gold" id="cpFill">Fill in the puzzle</button><button class="btn" id="cpClose">Close</button></div>
   <div class="err" id="cpErr"></div>
 </div></div>
 <div id="bmodal"><div class="box">
   <h3>Bulk add puzzles</h3>
-  <p class="hint" style="margin-top:10px">Paste one or many puzzles. Each puzzle is 5 lines: a title line, then 4 group lines. Leave a blank line between puzzles. The difficulty after the bar is optional (Easy, Medium or Hard; blank means Medium).</p>
-  <pre class="hint" style="margin:10px 0;padding:10px;border:1px solid var(--border);border-radius:9px;background:#000;white-space:pre-wrap;color:var(--gold3)">Puzzle name | Hard
+  <p class="hint" style="margin-top:10px">Paste one or many puzzles. Each puzzle is 5 lines: a title line, then 4 group lines. Leave a blank line between puzzles. The difficulty and tags after the bars are optional (difficulty is Easy, Medium or Hard; blank means Medium; separate tags with commas). To add tags without a difficulty, leave it empty: Puzzle name | | christmas.</p>
+  <pre class="hint" style="margin:10px 0;padding:10px;border:1px solid var(--border);border-radius:9px;background:#000;white-space:pre-wrap;color:var(--gold3)">Puzzle name | Hard | christmas, music
 Group name: word, word, word, word
 Group name: word, word, word, word
 Group name: word, word, word, word
@@ -322,18 +322,26 @@ $('#ded').addEventListener('click', async e => {
     try { if (DLs[dcur]) await remove(ref(db,'moth/distilllists/'+dcur)); dcur=null; ddraft=null; ddirty=false; dListR(); dEd(); toast('Distill list deleted'); } catch(err) { $('#derr').textContent = err.message; } }
 });
 /* ── Belladonna Connections puzzles (moth/connectionlists) — 4 named groups of 4 words; the Moth host app loads them into its Connections screen ── */
-let CL = {}, ccur = null, cdraft = null, cdirty = false, cnew = false;
+let CL = {}, ccur = null, cdraft = null, cdirty = false, cnew = false, cFind = '', cTag = '', cDif = '';
 const CDIFF = { easy:'Easy', medium:'Medium', hard:'Hard' }, cDiff = d => CDIFF[String(d||'').toLowerCase()] ? String(d).toLowerCase() : 'medium';
 const cgOf = v => { const gs = (Array.isArray(v.groups) ? v.groups : Object.values(v.groups || {})).map(g => ({ name: String((g && g.name) || ''), words: (Array.isArray(g && g.words) ? g.words : Object.values((g && g.words) || {})).map(String) })); while (gs.length < 4) gs.push({ name:'', words:[] }); return gs.slice(0,4).map(g => { const w = g.words.slice(0,4); while (w.length < 4) w.push(''); return { name:g.name, words:w }; }); };
-function cstart(){ onValue(ref(db,'moth/connectionlists'), s => { CL = s.val() || {}; cList(); if (ccur && !cdirty && !cnew) { if (CL[ccur]) cLoad(ccur); else { ccur = null; cdraft = null; cEd(); } } }); cEd(); }
+function cstart(){ onValue(ref(db,'moth/connectionlists'), s => { CL = s.val() || {}; const pr = CL._prompt; delete CL._prompt; CP_TEXT = pr && typeof pr.text==='string' && pr.text.trim() ? pr.text : CP_DEFAULT; cList(); if (ccur && !cdirty && !cnew) { if (CL[ccur]) cLoad(ccur); else { ccur = null; cdraft = null; cEd(); } } }); cEd(); }
+const cTags = v => (Array.isArray(v.tags) ? v.tags : Object.values(v.tags || {})).map(String);
 function cList(){
-  const ids = Object.keys(CL).sort((a,b)=>String(CL[a].name).localeCompare(String(CL[b].name)));
+  const all = {}; Object.values(CL).forEach(v => cTags(v).forEach(t => all[t] = (all[t]||0)+1));
+  $('#ctags').innerHTML = Object.keys(all).sort().map(t=>'<button class="tg'+(cTag===t?' on':'')+'" data-tag="'+esc(t)+'">'+esc(t)+' ('+all[t]+')</button>').join('');
+  $('#cdifs').innerHTML = Object.keys(CDIFF).map(k=>'<button class="tg'+(cDif===k?' on':'')+'" data-dif="'+k+'">'+CDIFF[k]+'</button>').join('');
+  const f = cFind.trim().toLowerCase();
+  const ids = Object.keys(CL).sort((a,b)=>String(CL[a].name).localeCompare(String(CL[b].name))).filter(id => { const v = CL[id]; if (cTag && !cTags(v).includes(cTag)) return false; if (cDif && cDiff(v.difficulty) !== cDif) return false; return !f || (String(v.name||'')+' '+cTags(v).join(' ')).toLowerCase().includes(f); });
   const nw = cdraft && ccur && !CL[ccur] && (cdirty || cdraft.name) ? '<div class="pl on" data-id="'+ccur+'"><span class="n">'+esc(cdraft.name||'New puzzle')+'</span><span class="c">not saved</span></div>' : '';
-  $('#clist').innerHTML = (ids.length || nw) ? nw + ids.map(id=>'<div class="pl'+(id===ccur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(CL[id].name||'Untitled')+'</span><span class="c">'+CDIFF[cDiff(CL[id].difficulty)]+'</span></div>').join('') : '<div class="empty">No puzzles yet.<br>Press <b>+ New</b> to make the first one.</div>';
+  $('#clist').innerHTML = (ids.length || nw) ? nw + ids.map(id=>'<div class="pl'+(id===ccur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(CL[id].name||'Untitled')+'</span><span class="c">'+CDIFF[cDiff(CL[id].difficulty)]+'</span></div>').join('') : '<div class="empty">'+(Object.keys(CL).length ? 'No puzzles match.' : 'No puzzles yet.<br>Press <b>+ New</b> to make the first one.')+'</div>';
 }
+$('#cfind').addEventListener('input', e => { cFind = e.target.value; cList(); });
+$('#cdifs').addEventListener('click', e => { const b = e.target.closest('[data-dif]'); if (!b) return; cDif = cDif === b.dataset.dif ? '' : b.dataset.dif; cList(); });
+$('#ctags').addEventListener('click', e => { const b = e.target.closest('[data-tag]'); if (!b) return; cTag = cTag === b.dataset.tag ? '' : b.dataset.tag; cList(); });
 $('#clist').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r) return; if (cdirty && !confirm('You have unsaved changes to this puzzle. Switch anyway?')) return; cLoad(r.dataset.id); });
-$('#newCn').onclick = () => { if (cdirty && !confirm('You have unsaved changes to this puzzle. Start a new one anyway?')) return; ccur = push(ref(db,'moth/connectionlists')).key; cdraft = { name:'', difficulty:'medium', groups: cgOf({}) }; cdirty = true; cnew = true; cList(); cEd(); setTimeout(()=>$('#cnm')&&$('#cnm').focus(),30); };
-function cLoad(id){ ccur = id; cnew = false; cdraft = { name: CL[id].name || '', difficulty: cDiff(CL[id].difficulty), groups: cgOf(CL[id]) }; cdirty = false; cList(); cEd(); }
+$('#newCn').onclick = () => { if (cdirty && !confirm('You have unsaved changes to this puzzle. Start a new one anyway?')) return; ccur = push(ref(db,'moth/connectionlists')).key; cdraft = { name:'', difficulty:'medium', tagsText:'', groups: cgOf({}) }; cdirty = true; cnew = true; cList(); cEd(); setTimeout(()=>$('#cnm')&&$('#cnm').focus(),30); };
+function cLoad(id){ ccur = id; cnew = false; cdraft = { name: CL[id].name || '', difficulty: cDiff(CL[id].difficulty), tagsText: cTags(CL[id]).join(', '), groups: cgOf(CL[id]) }; cdirty = false; cList(); cEd(); }
 function cEd(){
   const box = $('#ced');
   if (!cdraft) { $('#cTitle').textContent='Puzzle'; $('#cdirty').textContent=''; box.innerHTML='<div class="empty">Pick a puzzle on the left, or press <b>+ New</b>.<br>A puzzle is 4 hidden groups, each with a name and 4 words — 16 words in all.</div>'; return; }
@@ -341,6 +349,7 @@ function cEd(){
   box.innerHTML =
    '<label class="l" style="margin-top:0">Puzzle name (what the host sees in the menu)</label><input type="text" id="cnm" maxlength="60" value="'+esc(cdraft.name)+'">'
   +'<label class="l">Puzzle difficulty</label><select id="cdiff" style="width:100%;background:#000;border:1px solid var(--border2);border-radius:9px;color:var(--text);padding:9px 11px;font:inherit;font-size:14px">'+Object.keys(CDIFF).map(k=>'<option value="'+k+'"'+(cdraft.difficulty===k?' selected':'')+'>'+CDIFF[k]+'</option>').join('')+'</select>'
+  +'<label class="l">Tags (separate with commas, like christmas, music)</label><input type="text" id="ctg" value="'+esc(cdraft.tagsText||'')+'">'
   +cdraft.groups.map((g,gi)=>'<div class="cg" data-g="'+gi+'"><label class="l" style="margin-top:0">Group '+(gi+1)+' name (shown when the round ends)</label><input type="text" data-f="gname" maxlength="40" value="'+esc(g.name)+'"><div class="w4">'+g.words.map((w,wi)=>'<input type="text" data-f="word" data-w="'+wi+'" maxlength="24" value="'+esc(w)+'">').join('')+'</div></div>').join('')
   +'<p class="hint" style="margin-top:8px">All 16 words must be different. Words show in capital letters on the phones and the TV, so keep them short (up to 24 letters).</p>'
   +'<div class="bar" style="margin-top:14px"><button class="btn gold" id="csave">Save puzzle</button><button class="btn gold" id="cprompt">Prompt</button><span class="sp"></span><button class="btn danger" id="cdel">Delete puzzle</button></div>'
@@ -349,6 +358,7 @@ function cEd(){
 $('#ced').addEventListener('input', e => { if (!cdraft) return; const t = e.target;
   if (t.id==='cnm') { cdraft.name = t.value; $('#cTitle').textContent = cdraft.name || 'New puzzle'; if (!CL[ccur]) cList(); }
   else if (t.id==='cdiff') cdraft.difficulty = t.value;
+  else if (t.id==='ctg') cdraft.tagsText = t.value;
   else if (t.dataset.f==='gname') cdraft.groups[+t.closest('.cg').dataset.g].name = t.value;
   else if (t.dataset.f==='word') cdraft.groups[+t.closest('.cg').dataset.g].words[+t.dataset.w] = t.value;
   else return;
@@ -360,44 +370,48 @@ $('#ced').addEventListener('click', async e => {
     if (!name) { $('#cerr').textContent='Give the puzzle a name first.'; return; }
     if (groups.some(g=>g.words.some(w=>!w))) { $('#cerr').textContent='Every group needs 4 words — fill in all 16.'; return; }
     const all = groups.flatMap(g=>g.words.map(w=>w.toLowerCase())); if (new Set(all).size !== 16) { $('#cerr').textContent='Every one of the 16 words has to be different.'; return; }
-    try { const difficulty = cDiff(cdraft.difficulty); await set(ref(db,'moth/connectionlists/'+ccur), { name, difficulty, groups, updatedAt: serverTimestamp() }); CL[ccur]={ name, difficulty, groups }; ccur = push(ref(db,'moth/connectionlists')).key; cnew = true; cdirty = false; cdraft = { name:'', difficulty:'medium', groups: cgOf({}) }; cList(); cEd(); toast('Saved “'+name+'” — ready for the next puzzle'); setTimeout(()=>$('#cnm')&&$('#cnm').focus(),30); }
+    try { const difficulty = cDiff(cdraft.difficulty), tags = parseTags(cdraft.tagsText); await set(ref(db,'moth/connectionlists/'+ccur), { name, difficulty, ...(tags.length?{tags}:{}), groups, updatedAt: serverTimestamp() }); CL[ccur]={ name, difficulty, ...(tags.length?{tags}:{}), groups }; ccur = push(ref(db,'moth/connectionlists')).key; cnew = true; cdirty = false; cdraft = { name:'', difficulty:'medium', tagsText:'', groups: cgOf({}) }; cList(); cEd(); toast('Saved “'+name+'” — ready for the next puzzle'); setTimeout(()=>$('#cnm')&&$('#cnm').focus(),30); }
     catch(err) { $('#cerr').textContent = /permission/i.test(err.message) ? 'Firebase said no — add the moth/connectionlists rule (everyone can read, admins can write) and check your login is in the admins list.' : (err.message||'Could not save'); }
   }
   if (b.id==='cdel') { if (!confirm('Delete “'+(cdraft.name||'this puzzle')+'” for everyone?')) return;
     try { if (CL[ccur]) await remove(ref(db,'moth/connectionlists/'+ccur)); ccur=null; cdraft=null; cdirty=false; cList(); cEd(); toast('Puzzle deleted'); } catch(err) { $('#cerr').textContent = err.message; } }
 });
-const CP_TEXT = 'Make a Connections puzzle for a bar game night (theme: music and nightlife). I need 4 groups, each with a short group name and exactly 4 single words or very short phrases (up to 24 letters each). All 16 words must be different. Make the groups tricky: a few words should look like they could fit more than one group, but each word belongs to only one.\n\nReply with ONLY this, no extra text:\nPuzzle name | Easy, Medium or Hard\nGroup name: word, word, word, word\nGroup name: word, word, word, word\nGroup name: word, word, word, word\nGroup name: word, word, word, word';
+const CP_DEFAULT = 'Make a Connections puzzle for a bar game night (theme: music and nightlife). I need 4 groups, each with a short group name and exactly 4 single words or very short phrases (up to 24 letters each). All 16 words must be different. Make the groups tricky: a few words should look like they could fit more than one group, but each word belongs to only one.\n\nReply with ONLY this, no extra text:\nPuzzle name | Easy, Medium or Hard | tag, tag\nGroup name: word, word, word, word\nGroup name: word, word, word, word\nGroup name: word, word, word, word\nGroup name: word, word, word, word';
+let CP_TEXT = CP_DEFAULT;
 function cpParse(t){
   const lines = String(t||'').split(/\r?\n/).map(l=>l.replace(/^[\s*\-\u2022\d.)]+/,'').replace(/\*\*/g,'').trim()).filter(Boolean);
   const groups = [], head = [];
   for (const l of lines) { const i = l.indexOf(':'); if (i > 0) { const ws = l.slice(i+1).split(/[,;]/).map(x=>x.trim()).filter(Boolean); if (ws.length === 4) { groups.push({ name:l.slice(0,i).trim(), words:ws }); continue; } } head.push(l); }
   if (groups.length !== 4) return null;
   const hd = (head[0]||'').replace(/^(puzzle name|name|title)\s*:\s*/i,'').split('|'); const dm = (hd[1]||'').trim().toLowerCase();
-  return { name:hd[0].trim(), difficulty:CDIFF[dm]?dm:'', groups };
+  return { name:hd[0].trim(), difficulty:CDIFF[dm]?dm:'', tags:parseTags(hd[2]||''), groups };
 }
 $('#ced').addEventListener('click', e => { if (e.target.id==='cprompt') { $('#cpText').value = CP_TEXT; $('#cpIn').value=''; $('#cpErr').textContent=''; $('#cmodal').classList.add('on'); } });
 $('#cpClose').onclick = () => $('#cmodal').classList.remove('on');
 $('#cmodal').addEventListener('click', e => { if (e.target.id==='cmodal') $('#cmodal').classList.remove('on'); });
-$('#cpCopy').onclick = async () => { try { await navigator.clipboard.writeText(CP_TEXT); toast('Prompt copied'); } catch(e) { $('#cpText').select(); document.execCommand('copy'); toast('Prompt copied'); } };
-$('#cpFill').onclick = () => { const r = cpParse($('#cpIn').value); if (!r) { $('#cpErr').textContent = 'I could not find 4 groups with 4 words each. Paste the answer exactly as ChatGPT gave it.'; return; }
-  if (!cdraft) return; if (r.name) cdraft.name = r.name.slice(0,60); if (r.difficulty) cdraft.difficulty = r.difficulty; cdraft.groups = r.groups.map(g=>({ name:g.name.slice(0,40), words:g.words.map(w=>w.slice(0,24)) })); cdirty = true; $('#cmodal').classList.remove('on'); cEd(); $('#cdirty').textContent = 'Unsaved changes'; toast('Filled in — check it, then press Save'); };
+$('#cpSave').onclick = async () => { const text = $('#cpText').value.trim(); if (!text) { $('#cpErr').textContent='The prompt is empty.'; return; } try { await set(ref(db,'moth/connectionlists/_prompt'), { text, updatedAt: serverTimestamp() }); CP_TEXT = text; $('#cpErr').textContent=''; toast('Prompt saved'); } catch(err) { $('#cpErr').textContent = err.message||'Could not save'; } };
+$('#cpReset').onclick = async () => { if (!confirm('Go back to the original prompt?')) return; try { await remove(ref(db,'moth/connectionlists/_prompt')); } catch(e){} CP_TEXT = CP_DEFAULT; $('#cpText').value = CP_DEFAULT; toast('Original prompt restored'); };
+$('#cpCopy').onclick = async () => { try { await navigator.clipboard.writeText($('#cpText').value); toast('Prompt copied'); } catch(e) { $('#cpText').select(); document.execCommand('copy'); toast('Prompt copied'); } };
+$('#cpFill').onclick = () => { const blocks = $('#cpIn').value.split(/\r?\n\s*\r?\n/).map(b=>b.trim()).filter(Boolean); if (blocks.length > 1) { savePuzzles($('#cpIn').value, $('#cpErr'), $('#cmodal')); return; } const r = cpParse($('#cpIn').value); if (!r) { $('#cpErr').textContent = 'I could not find 4 groups with 4 words each. Paste the answer exactly as ChatGPT gave it.'; return; }
+  if (!cdraft) return; if (r.name) cdraft.name = r.name.slice(0,60); if (r.difficulty) cdraft.difficulty = r.difficulty; if (r.tags.length) cdraft.tagsText = r.tags.join(', '); cdraft.groups = r.groups.map(g=>({ name:g.name.slice(0,40), words:g.words.map(w=>w.slice(0,24)) })); cdirty = true; $('#cmodal').classList.remove('on'); cEd(); $('#cdirty').textContent = 'Unsaved changes'; toast('Filled in — check it, then press Save'); };
 $('#bulkCn').onclick = () => { $('#bkIn').value=''; $('#bkErr').textContent=''; $('#bmodal').classList.add('on'); };
 $('#bkClose').onclick = () => $('#bmodal').classList.remove('on');
 $('#bmodal').addEventListener('click', e => { if (e.target.id==='bmodal') $('#bmodal').classList.remove('on'); });
-$('#bkPrompt').onclick = async () => { const t = CP_TEXT.replace('Make a Connections puzzle','Make 5 different Connections puzzles').replace('Reply with ONLY this, no extra text:','Reply with ONLY the puzzles, one after another with a blank line between them, each in exactly this format, no extra text:'); try { await navigator.clipboard.writeText(t); toast('Prompt copied'); } catch(e) { toast('Could not copy'); } };
-$('#bkSave').onclick = async () => {
-  const blocks = $('#bkIn').value.split(/\r?\n\s*\r?\n/).map(b=>b.trim()).filter(Boolean), errs = []; let ok = 0;
-  if (!blocks.length) { $('#bkErr').textContent = 'Paste at least one puzzle first.'; return; }
+$('#bkPrompt').onclick = async () => { const t = CP_TEXT + '\n\nMake 5 different puzzles. Put a blank line between puzzles, and use exactly the format above for each one.'; try { await navigator.clipboard.writeText(t); toast('Prompt copied'); } catch(e) { toast('Could not copy'); } };
+async function savePuzzles(text, errEl, modal) {
+  const blocks = text.split(/\r?\n\s*\r?\n/).map(b=>b.trim()).filter(Boolean), errs = []; let ok = 0;
+  if (!blocks.length) { errEl.textContent = 'Paste at least one puzzle first.'; return; }
   for (let i = 0; i < blocks.length; i++) {
     const r = cpParse(blocks[i]); if (!r) { errs.push('Puzzle '+(i+1)+': I could not find 4 groups with 4 words each.'); continue; }
     const groups = r.groups.map((g,gi)=>({ name:(g.name||'Group '+(gi+1)).slice(0,40), words:g.words.map(w=>w.slice(0,24)) })), name = (r.name || 'Puzzle '+(i+1)).slice(0,60);
     if (new Set(groups.flatMap(g=>g.words.map(w=>w.toLowerCase()))).size !== 16) { errs.push('“'+name+'”: all 16 words have to be different.'); continue; }
-    try { await set(ref(db,'moth/connectionlists/'+push(ref(db,'moth/connectionlists')).key), { name, difficulty:cDiff(r.difficulty), groups, updatedAt: serverTimestamp() }); ok++; }
+    try { await set(ref(db,'moth/connectionlists/'+push(ref(db,'moth/connectionlists')).key), { name, difficulty:cDiff(r.difficulty), ...(r.tags.length?{tags:r.tags}:{}), groups, updatedAt: serverTimestamp() }); ok++; }
     catch(err) { errs.push('“'+name+'”: '+(/permission/i.test(err.message)?'Firebase said no — check the moth/connectionlists rule.':(err.message||'could not save'))); }
   }
-  $('#bkErr').textContent = (ok ? ok+' puzzle'+(ok===1?'':'s')+' saved.' : '') + (errs.length ? '\n'+errs.join('\n') : '');
-  if (ok && !errs.length) { $('#bmodal').classList.remove('on'); toast(ok+' puzzle'+(ok===1?'':'s')+' saved'); }
-};
+  errEl.textContent = (ok ? ok+' puzzle'+(ok===1?'':'s')+' saved.' : '') + (errs.length ? '\n'+errs.join('\n') : '');
+  if (ok && !errs.length) { modal.classList.remove('on'); toast(ok+' puzzle'+(ok===1?'':'s')+' saved'); }
+}
+$('#bkSave').onclick = () => savePuzzles($('#bkIn').value, $('#bkErr'), $('#bmodal'));
 /* ── game sections collapse under the game's name (closed by default; the page remembers what you opened) ── */
 const OPEN_KEY = 'moth.admin.open';
 let openGames = {}; try { openGames = JSON.parse(localStorage.getItem(OPEN_KEY) || '{}') || {}; } catch(e){}
