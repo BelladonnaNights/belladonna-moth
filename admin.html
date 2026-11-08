@@ -119,7 +119,7 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
 </div>
 <div class="game closed" id="g-conn"><button class="gh" data-game="g-conn">Belladonna Connections<span class="car">▸</span></button>
 <main id="cmain">
-  <section class="panel"><div class="ph"><span>Puzzles</span><span class="sp"></span><button class="btn sm" id="bulkCn">Bulk</button><button class="btn sm gold" id="newCn">+ New</button></div>
+  <section class="panel"><div class="ph"><span>Puzzles</span><span class="sp"></span><button class="btn sm gold" id="promptCn">Prompt</button><button class="btn sm" id="bulkCn">Bulk</button><button class="btn sm gold" id="newCn">+ New</button></div>
     <div class="pb"><label class="l" style="margin-top:0">Search by name or tag</label><input type="text" id="cfind"><div id="cdifs" style="margin-top:8px"></div><div id="ctags" style="margin-top:8px"></div><div id="clist" style="margin-top:8px"></div></div></section>
   <section class="panel"><div class="ph"><span id="cTitle">Puzzle</span><span class="sp"></span><span class="dirty" id="cdirty"></span></div>
     <div class="pb" id="ced"></div></section>
@@ -155,7 +155,7 @@ Next puzzle name | Easy
 Group name: word, word, word, word
 ...</pre>
   <textarea id="bkIn"></textarea>
-  <div class="bar" style="margin-top:8px"><button class="btn gold" id="bkSave">Save all puzzles</button><button class="btn" id="bkPrompt">Copy a ChatGPT prompt for 5 puzzles</button><button class="btn" id="bkClose">Close</button></div>
+  <div class="bar" style="margin-top:8px"><button class="btn gold" id="bkSave">Save all puzzles</button><button class="btn gold" id="bkEdit">Edit prompt</button><button class="btn" id="bkPrompt">Copy a ChatGPT prompt for 5 puzzles</button><button class="btn" id="bkClose">Close</button></div>
   <div class="err" id="bkErr" style="white-space:pre-line"></div>
 </div></div>
 <div id="toast"></div>
@@ -386,15 +386,18 @@ function cpParse(t){
   const hd = (head[0]||'').replace(/^(puzzle name|name|title)\s*:\s*/i,'').split('|'); const dm = (hd[1]||'').trim().toLowerCase();
   return { name:hd[0].trim(), difficulty:CDIFF[dm]?dm:'', tags:parseTags(hd[2]||''), groups };
 }
-$('#ced').addEventListener('click', e => { if (e.target.id==='cprompt') { $('#cpText').value = CP_TEXT; $('#cpIn').value=''; $('#cpErr').textContent=''; $('#cmodal').classList.add('on'); } });
+const openPrompt = () => { $('#bmodal').classList.remove('on'); $('#cpText').value = CP_TEXT; $('#cpIn').value=''; $('#cpErr').textContent=''; $('#cmodal').classList.add('on'); };
+$('#ced').addEventListener('click', e => { if (e.target.id==='cprompt') openPrompt(); });
+$('#promptCn').onclick = openPrompt;
 $('#cpClose').onclick = () => $('#cmodal').classList.remove('on');
 $('#cmodal').addEventListener('click', e => { if (e.target.id==='cmodal') $('#cmodal').classList.remove('on'); });
 $('#cpSave').onclick = async () => { const text = $('#cpText').value.trim(); if (!text) { $('#cpErr').textContent='The prompt is empty.'; return; } try { await set(ref(db,'moth/connectionlists/_prompt'), { text, updatedAt: serverTimestamp() }); CP_TEXT = text; $('#cpErr').textContent=''; toast('Prompt saved'); } catch(err) { $('#cpErr').textContent = err.message||'Could not save'; } };
 $('#cpReset').onclick = async () => { if (!confirm('Go back to the original prompt?')) return; try { await remove(ref(db,'moth/connectionlists/_prompt')); } catch(e){} CP_TEXT = CP_DEFAULT; $('#cpText').value = CP_DEFAULT; toast('Original prompt restored'); };
 $('#cpCopy').onclick = async () => { try { await navigator.clipboard.writeText($('#cpText').value); toast('Prompt copied'); } catch(e) { $('#cpText').select(); document.execCommand('copy'); toast('Prompt copied'); } };
 $('#cpFill').onclick = () => { const blocks = $('#cpIn').value.split(/\r?\n\s*\r?\n/).map(b=>b.trim()).filter(Boolean); if (blocks.length > 1) { savePuzzles($('#cpIn').value, $('#cpErr'), $('#cmodal')); return; } const r = cpParse($('#cpIn').value); if (!r) { $('#cpErr').textContent = 'I could not find 4 groups with 4 words each. Paste the answer exactly as ChatGPT gave it.'; return; }
-  if (!cdraft) return; if (r.name) cdraft.name = r.name.slice(0,60); if (r.difficulty) cdraft.difficulty = r.difficulty; if (r.tags.length) cdraft.tagsText = r.tags.join(', '); cdraft.groups = r.groups.map(g=>({ name:g.name.slice(0,40), words:g.words.map(w=>w.slice(0,24)) })); cdirty = true; $('#cmodal').classList.remove('on'); cEd(); $('#cdirty').textContent = 'Unsaved changes'; toast('Filled in — check it, then press Save'); };
+  if (!cdraft) { ccur = push(ref(db,'moth/connectionlists')).key; cdraft = { name:'', difficulty:'medium', tagsText:'', groups: cgOf({}) }; cnew = true; } if (r.name) cdraft.name = r.name.slice(0,60); if (r.difficulty) cdraft.difficulty = r.difficulty; if (r.tags.length) cdraft.tagsText = r.tags.join(', '); cdraft.groups = r.groups.map(g=>({ name:g.name.slice(0,40), words:g.words.map(w=>w.slice(0,24)) })); cdirty = true; $('#cmodal').classList.remove('on'); cEd(); $('#cdirty').textContent = 'Unsaved changes'; toast('Filled in — check it, then press Save'); };
 $('#bulkCn').onclick = () => { $('#bkIn').value=''; $('#bkErr').textContent=''; $('#bmodal').classList.add('on'); };
+$('#bkEdit').onclick = () => openPrompt();
 $('#bkClose').onclick = () => $('#bmodal').classList.remove('on');
 $('#bmodal').addEventListener('click', e => { if (e.target.id==='bmodal') $('#bmodal').classList.remove('on'); });
 $('#bkPrompt').onclick = async () => { const t = CP_TEXT + '\n\nMake 5 different puzzles. Put a blank line between puzzles, and use exactly the format above for each one.'; try { await navigator.clipboard.writeText(t); toast('Prompt copied'); } catch(e) { toast('Could not copy'); } };
