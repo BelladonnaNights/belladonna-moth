@@ -320,11 +320,12 @@ let tbSent=null;
 function sendTbNum(){ const el=document.getElementById('tbIn'); if(!el||!st||!st.tb) return; const n=parseInt(el.value,10); if(!(n>=1&&n<=9999)){ el.style.borderColor='#c0392b'; return; } tbSent={k:st.tb.id,n}; set(ref(db, base() + '/buzz/' + pid), { round: (st.tb.id+1)*10000+n, ts: serverTimestamp() }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
 function tbChange(){ tbSent=null; render(); }
 document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='tbIn') sendTbNum(); });
-let cnOrd=[],cnId=null,cnSeen=0,cnShakeT=0,cnDrag=null,cnPick=-1,cnTmT=null,cnRef={at:0,left:0,paused:false},cnLate=false,cnSentAt=0,cnSentK=0,cnFail=null;
+let cnHide=false,cnOrd=[],cnId=null,cnSeen=0,cnShakeT=0,cnDrag=null,cnPick=-1,cnTmT=null,cnRef={at:0,left:0,paused:false},cnLate=false,cnSentAt=0,cnSentK=0,cnFail=null;
 function cnPaint(){ if(!st||!st.cn) return; document.querySelectorAll('.cnw .tile[data-p]').forEach(t=>{ const p=+t.dataset.p, w=st.cn.board[cnOrd[p]]; if(w==null) return; if(t.textContent!==w) t.textContent=w; t.style.fontSize=cnFs(w); t.classList.toggle('on',cnPick===p); }); }
 function cnFs(w){ const n=String(w).length; return n>14?'8px':n>9?'9px':n>7?'10.5px':'14px'; }
-function cnTick(){ const el=document.getElementById('cnTm'); if(!el){ clearInterval(cnTmT); cnTmT=null; return; } const l=Math.max(0,cnRef.left-(cnRef.paused?0:performance.now()-cnRef.at)), s=Math.ceil(l/1000); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); el.classList.toggle('low',s<=10&&l>0);
-  const m=document.getElementById('cnWait'); if(m&&cnSentAt&&st&&st.cn&&st.cn.me&&(st.cn.me.l?st.cn.me.l.k:0)===cnSentK&&Date.now()-cnSentAt>4000&&!st.cn.paused) m.textContent=cnFail||'Not heard back yet — the host app may be offline or out of date.'; }
+function cnTick(){ const el=document.getElementById('cnTm'); if(!el){ clearInterval(cnTmT); cnTmT=null; return; } const l=Math.max(0,cnRef.left-(cnRef.paused?0:performance.now()-cnRef.at)), s=Math.ceil(l/1000); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); el.classList.toggle('low',s<=10&&l>0); }
+let cnWT=null;
+function cnWait(){ const m=document.getElementById('cnWait'); if(m&&cnSentAt&&st&&st.cn){ const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}, k=mm.l?mm.l.k:0; if(k!==cnSentK) cnSentAt=0; else if(!st.cn.paused){ if(!(st.bv>=2)){ m.classList.add('bad'); m.textContent='The Moth app on the host computer needs the new server.js and bridge.js. Replace them and restart the app.'; return; } m.classList.add('bad'); m.textContent=cnFail||(Date.now()-cnSentAt>4000?'The host did not answer. Check the Moth app is open and updated (bridge.js), then press SUBMIT again.':'Sent — waiting for the host…'); } } if(!cnSentAt){ clearInterval(cnWT); cnWT=null; } }
 function cnPhone(){
   const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=c.me||(c.p&&c.p[me0])||{s:[],m:0,o:false,l:null}, M='<img src="'+document.querySelector('#join img').src+'" alt="" id="altm">';
   if(c.id!==cnId){ cnId=c.id; cnOrd=Array.from({length:16},(_,i)=>i); cnPick=-1; cnSeen=me.l?me.l.k:0; }
@@ -333,19 +334,19 @@ function cnPhone(){
   if(c.state==='done'){ const w=c.winner, mine=w&&w.id===me0;
     return M+ti+'<div class="t">'+(mine?'You win!':w?'Round over':'No winner')+'</div><div class="s">'+(w?(mine?'You sorted all 4 groups first.':'<b>'+esc(w.name)+'</b> sorted all 4 groups first.'):'Nobody sorted all 4 groups.')+'</div>'
       +'<div class="cnw">'+(c.groups||[]).map((g,gi)=>'<div class="cb cg'+gi+'"><b>'+esc(g.name)+'</b><span>'+g.words.map(esc).join(' · ')+'</span></div>').join('')+'</div>'; }
-  const l=me.l, fresh=l&&l.k!==cnSeen; if(fresh) cnSeen=l.k;
+  const l=me.l, fresh=l&&l.k!==cnSeen; if(fresh){ cnSeen=l.k; cnHide=false; }
   if(fresh&&!l.ok) cnShakeT=Date.now()+600; const shake=Date.now()<cnShakeT, left=c.max-me.m;
-  let msg=''; if(l){ msg=l.ok?'All four rows are right!':l.dup?'You already tried that arrangement — no entry used.':'Not quite — '+l.n+' of 4 rows are right.'; }
+  let msg=''; if(l){ msg=l.ok?'All 16 are right!':l.dup?'You already tried that arrangement — no entry used.':l.n+' of 16 correct'; }
   if(me.s.length>=4) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
   const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0,paused:!!c.paused}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
   const rows=[0,1,2,3].map(r=>'<div class="crow"><i>'+(r+1)+'</i><div class="rw">'+[0,1,2,3].map(k=>{ const p=r*4+k, w=c.board[cnOrd[p]]; return '<div class="tile'+(cnPick===p?' on':'')+'" data-p="'+p+'" style="font-size:'+cnFs(w)+'">'+esc(w)+'</div>'; }).join('')+'</div></div>').join('');
   return '<div class="cnw'+(shake?' shake':'')+'">'+ti+tm+'<div class="msg2">Drag the words into rows. Each row is one group.</div><div class="grid">'+rows+'</div>'
     +'<div class="dots">Entries left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
-    +'<div class="msg'+(l&&!l.ok?' bad':'')+'" id="cnWait">'+(c.paused?'PAUSED — wait for the host.':me.o?'Out of entries — watch the screen.':esc(msg))+'</div>'
+    +'<div class="msg'+(l&&!l.ok?' bad':'')+'" id="cnWait">'+(c.paused?'PAUSED — wait for the host.':me.o?'Out of entries — watch the screen.':(cnHide?'':esc(msg)))+'</div>'
     +(me.o?'':'<div class="row2"><button class="go" data-act="cnsub"'+(c.paused?' disabled':'')+'>SUBMIT</button></div>')+'</div>';
 }
-function cnSwap(a,b){ const t=cnOrd[a]; cnOrd[a]=cnOrd[b]; cnOrd[b]=t; }
-function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return; cnSentAt=Date.now(); cnSentK=(st.cn.me&&st.cn.me.l)?st.cn.me.l.k:0; cnFail=null; const w=new Array(16); cnOrd.forEach((bi,p)=>{ w[bi]=Math.floor(p/4); }); cnPick=-1; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
+function cnSwap(a,b){ const t=cnOrd[a]; cnOrd[a]=cnOrd[b]; cnOrd[b]=t; cnHide=true; const m=document.getElementById('cnWait'); if(m&&!(st&&st.cn&&st.cn.paused)){ m.textContent=''; m.classList.remove('bad'); } cnSentAt=0; }
+function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return; cnSentAt=Date.now(); { const mm=st.cn.me||(st.cn.p&&st.cn.p[MYID()])||{}; cnSentK=mm.l?mm.l.k:0; } cnFail=null; const w=new Array(16); cnOrd.forEach((bi,p)=>{ w[bi]=Math.floor(p/4); }); cnPick=-1; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); clearInterval(cnWT); cnWT=setInterval(cnWait,400); cnWait(); }
 (function(){ const alt=document.getElementById('alt'); let moved=false;
   alt.addEventListener('pointerdown',e=>{ const t=e.target.closest('.cnw .tile[data-p]'); if(!t||!st||!st.cn||st.cn.state!=='live'||st.cn.paused) return; e.preventDefault(); moved=false;
     const r=t.getBoundingClientRect(), g=t.cloneNode(true); g.className='tile ghost'; g.style.cssText+=';position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;z-index:99;pointer-events:none';
