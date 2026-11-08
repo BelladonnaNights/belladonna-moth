@@ -45,9 +45,11 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .cnw{width:100%;display:flex;flex-direction:column;gap:8px}
 .cnw .cb{border-radius:10px;padding:9px 6px;color:#12100c;text-align:center}.cnw .cb b{display:block;font-family:var(--cinzel);font-size:12px;letter-spacing:.14em;text-transform:uppercase}.cnw .cb span{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .cg0{background:#c9a84c}.cg1{background:#c4627a}.cg2{background:#3aa39d}.cg3{background:#9677d1}
-.cnw .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.cnw .tile{min-height:64px;padding:4px 2px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:var(--cinzel);font-weight:700;font-size:clamp(10px,3.1vw,14px);letter-spacing:.02em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-align:center;word-break:break-word;line-height:1.1}
-.cnw .tile.on{background:rgba(201,168,76,.28);border-color:var(--gold2);color:var(--gold3)}
+.cnw .grid{display:flex;flex-direction:column;gap:7px}.cnw .crow{display:flex;align-items:stretch;gap:6px}.cnw .crow>i{flex:0 0 16px;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;color:var(--gold2);border-radius:6px;background:rgba(201,168,76,.12)}.cnw .rw{flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cnw .tile{height:62px;min-width:0;overflow:hidden;padding:2px;border-radius:10px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-family:var(--cinzel);font-weight:700;letter-spacing:.02em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-align:center;overflow-wrap:normal;word-break:normal;line-height:1.1;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.cnw .tile.on{background:rgba(201,168,76,.28);border-color:var(--gold2);color:var(--gold3)}.cnw .tile.lift{opacity:.3}.cnw .tile.tgt{border-color:var(--gold3);box-shadow:0 0 0 2px var(--gold2)}
+.tile.ghost{height:62px;border-radius:10px;border:2px solid var(--gold3);background:#2a2314;color:var(--gold3);font-family:var(--cinzel);font-weight:700;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-align:center;box-shadow:0 8px 22px #000a;transform:scale(1.06)}
+.cnti{font-family:var(--cinzel);font-weight:700;font-size:17px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold3);text-align:center;margin:2px 0 6px}.cnw .msg2{font-size:12px;color:var(--text2);text-align:center}.cnw .cntm{text-align:center;font-family:var(--cinzel);font-size:22px;color:var(--gold2)}.cnw .cntm.low{color:#ff7a66}
 .cnw.shake{animation:cnshake .5s}@keyframes cnshake{0%,100%{transform:none}15%{transform:translateX(-9px)}35%{transform:translateX(9px)}55%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .cnw .dots{display:flex;gap:7px;justify-content:center;align-items:center;font-size:13px;color:var(--text2)}.cnw .dots i{width:11px;height:11px;border-radius:50%;background:var(--gold2)}.cnw .dots i.x{background:#3a342a}
 .cnw .msg{min-height:20px;font-size:15px;color:var(--gold3)}.cnw .msg.bad{color:#ffb4a8}
@@ -92,7 +94,7 @@ body.glow::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:5
 #flash{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .5s}
 #conn{position:fixed;left:0;right:0;top:0;background:#7a1e1e;color:#fff;text-align:center;padding:6px;font-size:13px;display:none;z-index:9}
 </style></head><body>
-<div id="conn">Reconnecting…</div><div id="flash"></div><div id="ver" style="position:fixed;bottom:3px;left:0;right:0;text-align:center;font-size:10px;color:#4a4338;pointer-events:none">v5</div>
+<div id="conn">Reconnecting…</div><div id="flash"></div>
 <header><div class="brand" id="gname">Belladonna Moth</div></header>
 <div class="me" id="me" style="display:none"><span id="myname"></span><span class="score" id="myscore">0</span></div>
 <main>
@@ -154,6 +156,7 @@ function leave(msg){
 }
 function prevSet(n){ prev = st; st = n; }
 function render(){
+  if(cnDrag) return;
   if (!st) { altShow(false); $('#msg').textContent = 'Waiting for the host…'; return; }
   const r = st.round, me = (st.players || []).find(p => p.id === pid);
   if (!me) { if (Date.now() - joinedAt > 3500) leave('You were removed from the game. You can join again.'); else $('#msg').textContent = 'Joining…'; return; }
@@ -317,31 +320,46 @@ let tbSent=null;
 function sendTbNum(){ const el=document.getElementById('tbIn'); if(!el||!st||!st.tb) return; const n=parseInt(el.value,10); if(!(n>=1&&n<=9999)){ el.style.borderColor='#c0392b'; return; } tbSent={k:st.tb.id,n}; set(ref(db, base() + '/buzz/' + pid), { round: (st.tb.id+1)*10000+n, ts: serverTimestamp() }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
 function tbChange(){ tbSent=null; render(); }
 document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='tbIn') sendTbNum(); });
-let cnSel=[],cnId=null,cnSeen=0,cnShakeT=0;
+let cnOrd=[],cnId=null,cnSeen=0,cnShakeT=0,cnDrag=null,cnPick=-1,cnTmT=null,cnRef={at:0,left:0};
+function cnFs(w){ const n=String(w).length; return n>14?'8px':n>9?'9px':n>7?'10.5px':'14px'; }
+function cnTick(){ const el=document.getElementById('cnTm'); if(!el){ clearInterval(cnTmT); cnTmT=null; return; } const l=Math.max(0,cnRef.left-(performance.now()-cnRef.at)), s=Math.ceil(l/1000); el.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); el.classList.toggle('low',s<=10&&l>0); }
 function cnPhone(){
   const c=st.cn||{state:'idle',board:[]}, me0=MYID(), me=c.me||(c.p&&c.p[me0])||{s:[],m:0,o:false,l:null}, M='<img src="/moth.png" alt="" id="altm">';
-  if(c.id!==cnId){ cnId=c.id; cnSel=[]; cnSeen=me.l?me.l.k:0; }
+  if(c.id!==cnId){ cnId=c.id; cnOrd=Array.from({length:16},(_,i)=>i); cnPick=-1; cnSeen=me.l?me.l.k:0; }
   if(c.state==='idle') return M+'<div class="t">Connections</div><div class="s">Get ready to sort the words.<br>Watch the big screen.</div>';
+  const ti='<div class="cnti">'+esc(c.name||'')+'</div>';
   if(c.state==='done'){ const w=c.winner, mine=w&&w.id===me0;
-    return M+'<div class="t">'+(mine?'You win!':w?'Round over':'No winner')+'</div><div class="s">'+(w?(mine?'You sorted all 4 groups first.':'<b>'+esc(w.name)+'</b> sorted all 4 groups first.'):'Nobody sorted all 4 groups.')+'</div>'
+    return M+ti+'<div class="t">'+(mine?'You win!':w?'Round over':'No winner')+'</div><div class="s">'+(w?(mine?'You sorted all 4 groups first.':'<b>'+esc(w.name)+'</b> sorted all 4 groups first.'):'Nobody sorted all 4 groups.')+'</div>'
       +'<div class="cnw">'+(c.groups||[]).map((g,gi)=>'<div class="cb cg'+gi+'"><b>'+esc(g.name)+'</b><span>'+g.words.map(esc).join(' · ')+'</span></div>').join('')+'</div>'; }
-  const solved=new Set(me.s.flatMap(s=>s.i)), l=me.l, fresh=l&&l.k!==cnSeen; if(fresh) cnSeen=l.k;
+  const l=me.l, fresh=l&&l.k!==cnSeen; if(fresh) cnSeen=l.k;
   if(fresh&&!l.ok) cnShakeT=Date.now()+600; const shake=Date.now()<cnShakeT, left=c.max-me.m;
-  let msg=''; if(l){ msg=l.ok?'Got one!':l.dup?'You already tried that one.':'Not quite — '+l.n+' of 4 are in the same group.'; }
-  const banners=me.s.map(s=>'<div class="cb cg'+s.g+'"><b>'+esc(s.name)+'</b><span>'+s.i.map(i=>esc(c.board[i])).join(' · ')+'</span></div>').join('');
-  if(me.s.length>=4) return M+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div><div class="cnw">'+banners+'</div>';
-  const tiles=c.board.map((w,i)=>solved.has(i)?'':'<button class="tile'+(cnSel.includes(i)?' on':'')+'" data-act="cnpick" data-i="'+i+'"'+(me.o?' disabled':'')+'>'+esc(w)+'</button>').join('');
-  return '<div class="cnw'+(shake?' shake':'')+'">'+banners+'<div class="grid">'+tiles+'</div>'
-    +'<div class="dots">Mistakes left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
-    +'<div class="msg'+(l&&!l.ok?' bad':'')+'">'+(me.o?'Out of mistakes — watch the screen.':esc(msg))+'</div>'
-    +(me.o?'':'<div class="row2"><button data-act="cnclr"'+(cnSel.length?'':' disabled')+'>CLEAR</button><button class="go" data-act="cnsub"'+(cnSel.length===4?'':' disabled')+'>SUBMIT</button></div>')+'</div>';
+  let msg=''; if(l){ msg=l.ok?'All four rows are right!':l.dup?'You already tried that arrangement — no entry used.':'Not quite — '+l.n+' of 4 rows are right.'; }
+  if(me.s.length>=4) return M+ti+'<div class="t">Solved!</div><div class="s">Waiting for the round to finish.</div>';
+  const tm=c.secs?'<div class="cntm" id="cnTm"></div>':''; if(c.secs){ cnRef={at:performance.now(),left:c.left||0}; if(!cnTmT) cnTmT=setInterval(cnTick,250); }
+  const rows=[0,1,2,3].map(r=>'<div class="crow"><i>'+(r+1)+'</i><div class="rw">'+[0,1,2,3].map(k=>{ const p=r*4+k, w=c.board[cnOrd[p]]; return '<div class="tile'+(cnPick===p?' on':'')+'" data-p="'+p+'" style="font-size:'+cnFs(w)+'">'+esc(w)+'</div>'; }).join('')+'</div></div>').join('');
+  return '<div class="cnw'+(shake?' shake':'')+'">'+ti+tm+'<div class="msg2">Drag the words into rows. Each row is one group.</div><div class="grid">'+rows+'</div>'
+    +'<div class="dots">Entries left '+Array.from({length:c.max},(_,i)=>'<i class="'+(i<left?'':'x')+'"></i>').join('')+'</div>'
+    +'<div class="msg'+(l&&!l.ok?' bad':'')+'">'+(me.o?'Out of entries — watch the screen.':esc(msg))+'</div>'
+    +(me.o?'':'<div class="row2"><button class="go" data-act="cnsub">SUBMIT</button></div>')+'</div>';
 }
-function cnPick(i){ const k=cnSel.indexOf(i); if(k>=0) cnSel.splice(k,1); else if(cnSel.length<4) cnSel.push(i); render(); }
-function cnClear(){ cnSel=[]; render(); }
-function cnSubmit(){ if(cnSel.length!==4||!st||!st.cn||st.cn.state!=='live') return; const w=cnSel.slice(); cnSel=[]; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
-function cnSend(w){ const n=w[0]|(w[1]<<4)|(w[2]<<8)|(w[3]<<12); set(ref(db, base() + '/buzz/' + pid), { round: (st.cn.id+1)*1000000+n, ts: serverTimestamp() }).catch(()=>{}); }
+function cnSwap(a,b){ const t=cnOrd[a]; cnOrd[a]=cnOrd[b]; cnOrd[b]=t; }
+function cnSubmit(){ if(!st||!st.cn||st.cn.state!=='live') return; const w=new Array(16); cnOrd.forEach((bi,p)=>{ w[bi]=Math.floor(p/4); }); cnPick=-1; cnSend(w); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render(); }
+(function(){ const alt=document.getElementById('alt'); let moved=false;
+  alt.addEventListener('pointerdown',e=>{ const t=e.target.closest('.cnw .tile[data-p]'); if(!t||!st||!st.cn||st.cn.state!=='live') return; e.preventDefault(); moved=false;
+    const r=t.getBoundingClientRect(), g=t.cloneNode(true); g.className='tile ghost'; g.style.cssText+=';position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;z-index:99;pointer-events:none';
+    document.body.appendChild(g); t.classList.add('lift'); cnDrag={p:+t.dataset.p,g,dx:e.clientX-r.left,dy:e.clientY-r.top,x0:e.clientX,y0:e.clientY}; });
+  document.addEventListener('pointermove',e=>{ if(!cnDrag) return; if(Math.abs(e.clientX-cnDrag.x0)+Math.abs(e.clientY-cnDrag.y0)>8) moved=true; cnDrag.g.style.left=(e.clientX-cnDrag.dx)+'px'; cnDrag.g.style.top=(e.clientY-cnDrag.dy)+'px';
+    document.querySelectorAll('.cnw .tile.tgt').forEach(x=>x.classList.remove('tgt')); const el=document.elementFromPoint(e.clientX,e.clientY), t=el&&el.closest('.cnw .tile[data-p]'); if(t&&+t.dataset.p!==cnDrag.p) t.classList.add('tgt'); });
+  const end=e=>{ if(!cnDrag) return; const d=cnDrag; cnDrag=null; d.g.remove(); document.querySelectorAll('.cnw .tile.tgt,.cnw .tile.lift').forEach(x=>{ x.classList.remove('tgt'); x.classList.remove('lift'); });
+    if(e.type==='pointerup'){ const el=document.elementFromPoint(e.clientX,e.clientY), t=el&&el.closest('.cnw .tile[data-p]'), q=t?+t.dataset.p:-1;
+      if(moved&&q>=0&&q!==d.p){ cnSwap(d.p,q); cnPick=-1; }
+      else if(!moved){ if(cnPick<0) cnPick=d.p; else if(cnPick===d.p) cnPick=-1; else { cnSwap(cnPick,d.p); cnPick=-1; } } }
+    render(); };
+  document.addEventListener('pointerup',end); document.addEventListener('pointercancel',end);
+})();
+function cnSend(w){ let n=0; w.forEach((r,i)=>{ n+=r*Math.pow(4,i); }); set(ref(db, base() + '/buzz/' + pid), { round: (st.cn.id+1)*4294967296+n, ts: serverTimestamp() }).catch(()=>{}); }
 document.getElementById('alt').addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return;
-  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnpick') cnPick(Number(b.dataset.i)); else if(b.dataset.act==='cnclr') cnClear(); else if(b.dataset.act==='cnsub') cnSubmit(); else if(b.dataset.act==='seek') sendSeek();
+  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnsub') cnSubmit(); else if(b.dataset.act==='seek') sendSeek();
   try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} });
 function altShow(on){ if(!on){ fxStop(); document.body.classList.remove('glow'); } document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
 const MYID = () => pid;
