@@ -71,6 +71,7 @@ label.l{display:block;font-family:var(--cinzel);font-size:10px;letter-spacing:.1
 .thumb{width:200px;height:112px;object-fit:contain;border-radius:8px;border:1px solid var(--border2);background:#000;display:block}
 div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5px}
 .nums{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cg{border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:10px;background:var(--surface2)}.cg .w4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}@media(max-width:700px){.cg .w4{grid-template-columns:1fr 1fr}}
 </style></head><body>
 
 <div id="gate">
@@ -112,6 +113,14 @@ div.thumb.none{display:grid;place-items:center;color:var(--text3);font-size:12.5
     <div class="pb" id="ded"></div></section>
 </main>
 </div>
+<div class="game closed" id="g-conn"><button class="gh" data-game="g-conn">Belladonna Connections<span class="car">▸</span></button>
+<main id="cmain">
+  <section class="panel"><div class="ph"><span>Puzzles</span><span class="sp"></span><button class="btn sm gold" id="newCn">+ New</button></div>
+    <div class="pb" id="clist"></div></section>
+  <section class="panel"><div class="ph"><span id="cTitle">Puzzle</span><span class="sp"></span><span class="dirty" id="cdirty"></span></div>
+    <div class="pb" id="ced"></div></section>
+</main>
+</div>
 <div class="game closed" id="g-seek"><button class="gh" data-game="g-seek">Belladonna Seek<span class="car">▸</span></button>
 <main id="smain" class="one">
   <section class="panel"><div class="ph"><span>Pictures &amp; playlists</span><span class="sp"></span><span class="dirty" id="sdirty"></span><button class="btn sm" id="newSpl">+ New playlist</button><button class="btn sm gold" id="newSp">+ New picture</button></div>
@@ -139,7 +148,7 @@ onAuthStateChanged(auth, u => { const ok = !!u && !u.isAnonymous; $('#gate').sty
 
 /* ── data ── */
 let PL = {}, cur = null, draft = null, dirty = false, started = false;
-function start(){ if (started) return; started = true; vstart(); dstart(); sstart(); onValue(ref(db,'moth/playlists'), s => { PL = s.val() || {}; renderList(); if (cur && !dirty) { if (PL[cur]) load(cur, true); else { cur = null; draft = null; renderEd(); } } }); renderEd(); }
+function start(){ if (started) return; started = true; vstart(); dstart(); sstart(); cstart(); onValue(ref(db,'moth/playlists'), s => { PL = s.val() || {}; renderList(); if (cur && !dirty) { if (PL[cur]) load(cur, true); else { cur = null; draft = null; renderEd(); } } }); renderEd(); }
 const songsOf = p => (Array.isArray(p.songs) ? p.songs : Object.values(p.songs || {})).map(s => ({ title: s.title || '', artist: s.artist || '' }));
 function renderList(){
   const ids = Object.keys(PL).sort((a,b)=>String(PL[a].name).localeCompare(String(PL[b].name)));
@@ -282,6 +291,47 @@ $('#ded').addEventListener('click', async e => {
   if (b.id==='ddel') { if (!confirm('Delete “'+(ddraft.name||'this list')+'” for everyone?')) return;
     try { if (DLs[dcur]) await remove(ref(db,'moth/distilllists/'+dcur)); dcur=null; ddraft=null; ddirty=false; dListR(); dEd(); toast('Distill list deleted'); } catch(err) { $('#derr').textContent = err.message; } }
 });
+/* ── Belladonna Connections puzzles (moth/connectionlists) — 4 named groups of 4 words; the Moth host app loads them into its Connections screen ── */
+let CL = {}, ccur = null, cdraft = null, cdirty = false;
+const cgOf = v => { const gs = (Array.isArray(v.groups) ? v.groups : Object.values(v.groups || {})).map(g => ({ name: String((g && g.name) || ''), words: (Array.isArray(g && g.words) ? g.words : Object.values((g && g.words) || {})).map(String) })); while (gs.length < 4) gs.push({ name:'', words:[] }); return gs.slice(0,4).map(g => { const w = g.words.slice(0,4); while (w.length < 4) w.push(''); return { name:g.name, words:w }; }); };
+function cstart(){ onValue(ref(db,'moth/connectionlists'), s => { CL = s.val() || {}; cList(); if (ccur && !cdirty) { if (CL[ccur]) cLoad(ccur); else { ccur = null; cdraft = null; cEd(); } } }); cEd(); }
+function cList(){
+  const ids = Object.keys(CL).sort((a,b)=>String(CL[a].name).localeCompare(String(CL[b].name)));
+  $('#clist').innerHTML = ids.length ? ids.map(id=>'<div class="pl'+(id===ccur?' on':'')+'" data-id="'+id+'"><span class="n">'+esc(CL[id].name||'Untitled')+'</span><span class="c">4 groups</span></div>').join('') : '<div class="empty">No puzzles yet.<br>Press <b>+ New</b> to make the first one.</div>';
+}
+$('#clist').addEventListener('click', e => { const r=e.target.closest('.pl'); if(!r) return; if (cdirty && !confirm('You have unsaved changes to this puzzle. Switch anyway?')) return; cLoad(r.dataset.id); });
+$('#newCn').onclick = () => { if (cdirty && !confirm('You have unsaved changes to this puzzle. Start a new one anyway?')) return; ccur = push(ref(db,'moth/connectionlists')).key; cdraft = { name:'', groups: cgOf({}) }; cdirty = true; cList(); cEd(); setTimeout(()=>$('#cnm')&&$('#cnm').focus(),30); };
+function cLoad(id){ ccur = id; cdraft = { name: CL[id].name || '', groups: cgOf(CL[id]) }; cdirty = false; cList(); cEd(); }
+function cEd(){
+  const box = $('#ced');
+  if (!cdraft) { $('#cTitle').textContent='Puzzle'; $('#cdirty').textContent=''; box.innerHTML='<div class="empty">Pick a puzzle on the left, or press <b>+ New</b>.<br>A puzzle is 4 hidden groups, each with a name and 4 words — 16 words in all.</div>'; return; }
+  $('#cTitle').textContent = cdraft.name || 'New puzzle'; $('#cdirty').textContent = cdirty ? 'Unsaved changes' : '';
+  box.innerHTML =
+   '<label class="l" style="margin-top:0">Puzzle name (what the host sees in the menu)</label><input type="text" id="cnm" maxlength="60" value="'+esc(cdraft.name)+'">'
+  +cdraft.groups.map((g,gi)=>'<div class="cg" data-g="'+gi+'"><label class="l" style="margin-top:0">Group '+(gi+1)+' name (shown when the round ends)</label><input type="text" data-f="gname" maxlength="40" value="'+esc(g.name)+'"><div class="w4">'+g.words.map((w,wi)=>'<input type="text" data-f="word" data-w="'+wi+'" maxlength="24" value="'+esc(w)+'">').join('')+'</div></div>').join('')
+  +'<p class="hint" style="margin-top:8px">All 16 words must be different. Words show in capital letters on the phones and the TV, so keep them short (up to 24 letters).</p>'
+  +'<div class="bar" style="margin-top:14px"><button class="btn gold" id="csave">Save puzzle</button><span class="sp"></span><button class="btn danger" id="cdel">Delete puzzle</button></div>'
+  +'<div class="err" id="cerr"></div><p class="hint" style="margin-top:6px">Saved puzzles show up in the Moth host app\'s Belladonna Connections screen — it checks for new ones every time you open it.</p>';
+}
+$('#ced').addEventListener('input', e => { if (!cdraft) return; const t = e.target;
+  if (t.id==='cnm') { cdraft.name = t.value; $('#cTitle').textContent = cdraft.name || 'New puzzle'; }
+  else if (t.dataset.f==='gname') cdraft.groups[+t.closest('.cg').dataset.g].name = t.value;
+  else if (t.dataset.f==='word') cdraft.groups[+t.closest('.cg').dataset.g].words[+t.dataset.w] = t.value;
+  else return;
+  cdirty = true; $('#cdirty').textContent = 'Unsaved changes'; });
+$('#ced').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !cdraft) return;
+  if (b.id==='csave') {
+    const name = (cdraft.name||'').replace(/\s+/g,' ').trim(), groups = cdraft.groups.map((g,i)=>({ name:(g.name||'').replace(/\s+/g,' ').trim() || 'Group '+(i+1), words:g.words.map(w=>w.replace(/\s+/g,' ').trim()) }));
+    if (!name) { $('#cerr').textContent='Give the puzzle a name first.'; return; }
+    if (groups.some(g=>g.words.some(w=>!w))) { $('#cerr').textContent='Every group needs 4 words — fill in all 16.'; return; }
+    const all = groups.flatMap(g=>g.words.map(w=>w.toLowerCase())); if (new Set(all).size !== 16) { $('#cerr').textContent='Every one of the 16 words has to be different.'; return; }
+    try { await set(ref(db,'moth/connectionlists/'+ccur), { name, groups, updatedAt: serverTimestamp() }); cdirty=false; cdraft.name=name; cdraft.groups=groups; cEd(); toast('Saved “'+name+'”'); }
+    catch(err) { $('#cerr').textContent = /permission/i.test(err.message) ? 'Firebase said no — add the moth/connectionlists rule (everyone can read, admins can write) and check your login is in the admins list.' : (err.message||'Could not save'); }
+  }
+  if (b.id==='cdel') { if (!confirm('Delete “'+(cdraft.name||'this puzzle')+'” for everyone?')) return;
+    try { if (CL[ccur]) await remove(ref(db,'moth/connectionlists/'+ccur)); ccur=null; cdraft=null; cdirty=false; cList(); cEd(); toast('Puzzle deleted'); } catch(err) { $('#cerr').textContent = err.message; } }
+});
 /* ── game sections collapse under the game's name (closed by default; the page remembers what you opened) ── */
 const OPEN_KEY = 'moth.admin.open';
 let openGames = {}; try { openGames = JSON.parse(localStorage.getItem(OPEN_KEY) || '{}') || {}; } catch(e){}
@@ -416,5 +466,5 @@ $('#sbody').addEventListener('click', async e => {
     } catch(err2) { fail(err2.message||'Could not delete'); }
   }
 });
-window.addEventListener('beforeunload', e => { if (dirty || vdirty || ddirty || sdirty) { e.preventDefault(); e.returnValue=''; } });
+window.addEventListener('beforeunload', e => { if (dirty || vdirty || ddirty || sdirty || cdirty) { e.preventDefault(); e.returnValue=''; } });
 </script></body></html>
