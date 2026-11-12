@@ -64,6 +64,8 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 #alt .sq{font-family:var(--display);font-size:34px;color:var(--text);letter-spacing:.03em;line-height:1.1;white-space:pre-line}
 .snum{width:min(62vw,240px);font-size:72px;text-align:center;padding:8px 10px;border-radius:18px;border:2px solid var(--border2);background:var(--surface);color:var(--gold3);font-family:var(--display);outline:none;-webkit-user-select:text;user-select:text}
 .snum:focus{border-color:var(--gold)}
+.ptxt{width:min(88vw,440px);font-size:30px;text-align:center;padding:12px 14px;border-radius:16px;border:2px solid var(--border2);background:var(--surface);color:var(--gold3);font-family:var(--display);letter-spacing:.03em;outline:none;-webkit-user-select:text;user-select:text}.ptxt:focus{border-color:var(--gold)}
+.ptyp{font-family:var(--cinzel,var(--display));font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold2)}
 .sct{font-family:var(--display);font-size:54px;color:var(--gold2);letter-spacing:.05em;line-height:1}
 .sans{font-family:var(--display);font-size:96px;color:var(--gold2);line-height:1}
 .sbtn{width:min(62vw,240px);font-family:var(--display);font-size:30px;letter-spacing:.08em;padding:12px;border-radius:14px;border:none;background:linear-gradient(135deg,#c9a84c,#f5df90 50%,#c9a84c);color:#120e02;touch-action:manipulation}
@@ -296,6 +298,15 @@ function altRender(md,entered,myVote){
     else if(k.state==='ready') h=M+'<div class="t">Picture '+esc(k.number)+'</div><div class="s">Get ready — watch the big screen!'+(many?'<br>'+qs.length+' questions this time.':'')+'</div>';
     else if(k.state==='done') h=M+'<div class="t">That\'s Seek!</div><div class="s">Thanks for playing.</div>';
     else h=M+'<div class="t">Belladonna Seek</div><div class="s">A picture, a tricky thing to count, and a timer.<br>Get ready!</div>';
+  } else if(md==='pics'){
+    const k=st.pk||{state:'idle'}, mine=myPicNow(k), res=(k.results||[]).find(x=>x.id===MYID()), P0=k.prompt?'<div class="sq">'+esc(k.prompt)+'</div>':'<div class="sq">What is this?</div>', TY=k.type?'<div class="ptyp">'+esc(k.type)+'</div>':'';
+    seekStamp={at:Date.now(),left:k.left||0};
+    if(k.state==='live') h=TY+P0+(k.timed?'<div class="sct" data-seekleft="1"></div>':'')+'<input class="ptxt" id="pktxt" type="text" maxlength="100" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send" value="'+(mine==null?'':esc(mine))+'"><button class="sbtn" data-act="pics">'+(mine==null?'SEND':'UPDATE')+'</button><div class="s" id="pkerr">'+(mine==null?'Look at the big screen and type your answer.':'Answer sent: <b style="color:var(--gold2)">'+esc(mine)+'</b><br>You can change it until time is up.')+'</div>';
+    else if(k.state==='closed') h=M+'<div class="t">Time\'s up!</div><div class="s">'+(mine==null?'No answer sent.':'Your answer: <b style="color:var(--gold2)">'+esc(mine)+'</b>')+'<br>Eyes on the big screen.</div>';
+    else if(k.state==='revealed') h=TY+'<div class="s">The answer</div><div class="sans" style="font-size:'+((k.answer||'').length>14?'40px':'56px')+';line-height:1.1">'+esc(k.answer)+'</div><div class="s" style="font-size:18px">'+(res?'You said <b style="color:var(--gold2)">'+esc(res.text)+'</b><br>'+(res.ok?'<b style="color:var(--gold2)">Correct!</b>':'Not this time'):'You didn\'t answer this one.')+'</div>';
+    else if(k.state==='ready') h=M+'<div class="t">Picture '+esc(k.number)+'</div><div class="s">Get ready — watch the big screen!</div>';
+    else if(k.state==='done') h=M+'<div class="t">That\'s Pics!</div><div class="s">Thanks for playing.</div>';
+    else h=M+'<div class="t">Belladonna Pics</div><div class="s">Look at the picture, type what you see.<br>Get ready!</div>';
   } else h=M+'<div class="t">Waiting</div><div class="s">for the host to pick a game</div>';
   if(A.dataset.h!==h){ A.dataset.h=h; A.innerHTML=h; }
   fxSync(); altExtras(md);
@@ -304,7 +315,7 @@ let hitSent=null, micStamp={at:0,left:0}, lastBeat=null;
 const fmtLeft=ms=>{ const s=Math.max(0,Math.ceil(ms/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
 setInterval(()=>{ document.querySelectorAll('#alt [data-left]').forEach(e=>{ e.textContent=fmtLeft(micStamp.left-(Date.now()-micStamp.at)); }); },300);
 function altExtras(md){
-  if(md==='seek') seekTick();
+  if(md==='seek'||md==='pics') seekTick();
   const m=st.mic, c=st.catch, me=MYID(); let glow=false, beat=null;
   if(md==='mic'&&m&&m.state==='live'&&m.holder&&m.holder.id===me){ glow=true; beat='m'+m.id+'|'+m.passes; }
   if(md==='mic'&&m&&m.state==='done'&&m.winner&&m.winner.id===me) glow=true;
@@ -377,7 +388,7 @@ function cnSubmit(){ if(Date.now()-cnLastSub<500) return; cnLastSub=Date.now(); 
 })();
 function cnSend(w){ let n=0; w.forEach((r,i)=>{ n+=r*Math.pow(4,i); }); set(ref(db, base() + '/buzz/' + pid), { round: (st.cn.id+1)*4294967296+n, ts: serverTimestamp() }).catch(e=>{ cnFail='Firebase would not take that: '+((e&&e.message)||'error'); }); }
 document.getElementById('alt').addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return;
-  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnsub') cnSubmit(); else if(b.dataset.act==='seek') sendSeek();
+  if(b.dataset.act==='enter') sendEnter(); else if(b.dataset.act==='hit') sendHit(); else if(b.dataset.act==='vote') sendVote(Number(b.dataset.i)); else if(b.dataset.act==='tbnum') sendTbNum(); else if(b.dataset.act==='tbchg') tbChange(); else if(b.dataset.act==='cnsub') cnSubmit(); else if(b.dataset.act==='seek') sendSeek(); else if(b.dataset.act==='pics') sendPics();
   try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} });
 function altShow(on){ if(!on){ document.getElementById('cnSubWrap').style.display='none'; fxStop(); document.body.classList.remove('glow'); } document.getElementById('alt').style.display=on?'flex':'none'; document.getElementById('wrap').style.display=on?'none':''; document.getElementById('msg').style.display=on?'none':''; }
 const MYID = () => pid;
@@ -399,6 +410,16 @@ function sendSeek(){
   set(ref(db, base() + '/seek/' + pid), { sid:k.id, ns:ns.map(x=>x==null?'':x).join(',') }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render();
 }
 document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.classList.contains('snum')) sendSeek(); });
+/* ───── Belladonna Pics: type what the picture shows ───── */
+const myPics={}; const myPicNow=k=>{ if(k.id!=null&&myPics[k.id]!=null) return myPics[k.id]; try{ const x=JSON.parse(LS.get('moth-pic-'+code)||'null'); return x&&x.sid===k.id?x.t:null; }catch(e){ return null; } };
+function sendPics(){
+  const k=st&&st.pk; if(!k||k.state!=='live') return; const el=document.getElementById('pktxt'), t=el?el.value.replace(/\s+/g,' ').trim():'', msg=document.getElementById('pkerr');
+  if(!t){ if(msg) msg.textContent='Type your answer first.'; return; }
+  myPics[k.id]=t; LS.set('moth-pic-'+code, JSON.stringify({sid:k.id,t}));
+  set(ref(db, base() + '/seek/' + pid), { sid:k.id, ns:t.slice(0,100) }).catch(()=>{}); try{ navigator.vibrate&&navigator.vibrate(40); }catch(_){} render();
+}
+document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter'&&e.target.id==='pktxt') sendPics(); });
+
 $('#buzz').addEventListener('pointerdown', buzz);
 $('#goBtn').onclick = join;
 ['code','nm'].forEach(i => $('#'+i).addEventListener('keydown', e => { if (e.key === 'Enter') join(); }));
