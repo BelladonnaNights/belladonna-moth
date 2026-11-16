@@ -310,11 +310,11 @@ function altRender(md,entered,myVote){
     else h=M+'<div class="t">Belladonna Pics</div><div class="s">Look at the picture, type what you see.<br>Get ready!</div>';
   } else if(md==='third'){
     const k=st.th||{state:'idle'}, me=thMine(k), res=(k.results||[]).find(x=>x.id===MYID());
-    seekStamp={at:Date.now(),left:k.left||0};
+    seekStamp={at:Date.now(),left:k.state==='third'?(k.closeLeft||0):(k.left||0)};
     if(k.state==='live'||k.state==='third'){
-      const late=k.state==='third', msg=late?(me?'Answer sent: <b style="color:var(--gold2)">'+esc(me.t)+'</b><br>'+(me.tier==='low'?'Worth half points.':'Locked in for full points. Change it and it drops to half.'):'Hint 3 is out. Answers sent now are worth half points.')
+      const late=k.state==='third', shut=!!k.closed||thShutId===k.id, msg=shut?(me?'Time\'s up. Your answer: <b style="color:var(--gold2)">'+esc(me.t)+'</b><br>'+(me.tier==='low'?'Worth half points.':'Locked in for full points.'):'Time\'s up. No answer sent.'):late?(me?'Answer sent: <b style="color:var(--gold2)">'+esc(me.t)+'</b><br>'+(me.tier==='low'?'Worth half points.':'Locked in for full points. Change it and it drops to half.'):'Hint 3 is out. Answers sent now are worth half points.')
         :(me?'Answer sent: <b style="color:var(--gold2)">'+esc(me.t)+'</b><br>Change it after hint 3 shows and it drops to half points.':'Watch the big screen. An answer in before hint 3 is worth full points.');
-      h='<div class="ptyp">'+(late?'Hint 3 is out':'Hints are flipping')+'</div><div class="sq">What is the answer?</div>'+(late?'':'<div class="sct" data-seekleft="1"></div>')+'<input class="ptxt" id="thtxt" type="text" maxlength="100" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send" value="'+(me?esc(me.t):'')+'"><button class="sbtn" data-act="third">'+(me?'UPDATE':'SEND')+'</button><div class="s" id="therr">'+msg+'</div>'; }
+      h='<div class="ptyp">'+(shut?'Time\'s up':late?'Hint 3 is out':'Hints are flipping')+'</div><div class="sq">What is the answer?</div>'+(shut||(late&&!k.closeLeft)?'':'<div class="sct" data-seekleft="1"></div>')+'<input class="ptxt" id="thtxt"'+(shut?' disabled':'')+' type="text" maxlength="100" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="send" value="'+(me?esc(me.t):'')+'">'+(shut?'':'<button class="sbtn" data-act="third">'+(me?'UPDATE':'SEND')+'</button>')+'<div class="s" id="therr">'+msg+'</div>'; }
     else if(k.state==='revealed') h='<div class="ptyp">The answer</div><div class="sans" style="font-size:'+((k.answer||'').length>14?'40px':'56px')+';line-height:1.1">'+esc(k.answer)+'</div><div class="s" style="font-size:18px">'+(res?'You said <b style="color:var(--gold2)">'+esc(res.text)+'</b><br>'+(res.ok?'<b style="color:var(--gold2)">Correct! +'+res.pts+' points</b>'+(res.tier==='low'?'<br>Half points: hint 3 was out.':''):'Not this time'):'You didn\'t answer this one.')+'</div>';
     else if(k.state==='ready') h=M+'<div class="t">Puzzle '+esc(k.number)+'</div><div class="s">Get ready — watch the big screen!</div>';
     else if(k.state==='done') h=M+'<div class="t">That\'s all!</div><div class="s">Thanks for playing.</div>';
@@ -410,7 +410,9 @@ function sendVote(i){ if (!st || !st.vote || st.vote.state !== 'open') return; c
 /* ───── Belladonna Seek: type how many you counted before the timer runs out ───── */
 let seekStamp={at:0,left:0};
 const mySeeks={}; const mySeekNow=k=>{ if(k.id!=null&&mySeeks[k.id]) return mySeeks[k.id]; try{ const x=JSON.parse(LS.get('moth-seek-'+code)||'null'); return x&&x.sid===k.id?x.ns:null; }catch(e){ return null; } };
-function seekTick(){ document.querySelectorAll('#alt [data-seekleft]').forEach(e=>{ e.textContent=Math.max(0,Math.ceil((seekStamp.left-(Date.now()-seekStamp.at))/1000)); }); }
+let thShutId=null;
+function seekTick(){ const k=st&&st.th; if(st&&st.mode==='third'&&k&&k.state==='third'&&!k.closed&&k.closeLeft&&thShutId!==k.id&&Date.now()-seekStamp.at>=seekStamp.left){ thShutId=k.id; render(); }   // cut the phone off on time even if the update is late
+  document.querySelectorAll('#alt [data-seekleft]').forEach(e=>{ e.textContent=Math.max(0,Math.ceil((seekStamp.left-(Date.now()-seekStamp.at))/1000)); }); }
 setInterval(seekTick,250);
 function seekValues(){ const els=[...document.querySelectorAll('#alt .snum')]; return els.map(e=>e.value.trim()); }
 function seekCheck(){ const vals=seekValues(), msg=document.getElementById('skerr');
@@ -434,7 +436,7 @@ document.getElementById('alt').addEventListener('keydown',e=>{ if(e.key==='Enter
 /* ───── This, That, and the Third: type the one answer the three hints point at ───── */
 const myTh={}; const thMine=k=>{ if(k.id!=null&&myTh[k.id]!=null) return myTh[k.id]; try{ const x=JSON.parse(LS.get('moth-th-'+code)||'null'); return x&&x.sid===k.id?{t:x.t,tier:x.tier}:null; }catch(e){ return null; } };
 function sendThird(){
-  const k=st&&st.th; if(!k||!['live','third'].includes(k.state)) return; const el=document.getElementById('thtxt'), t=el?el.value.replace(/\s+/g,' ').trim():'', msg=document.getElementById('therr');
+  const k=st&&st.th; if(!k||!['live','third'].includes(k.state)||k.closed||thShutId===k.id) return; const el=document.getElementById('thtxt'), t=el?el.value.replace(/\s+/g,' ').trim():'', msg=document.getElementById('therr');
   if(!t){ if(msg) msg.textContent='Type your answer first.'; return; }
   const was=thMine(k); if(was&&was.t===t) return;
   const tier=k.state==='third'?'low':(was?was.tier:'full'); myTh[k.id]={t,tier}; LS.set('moth-th-'+code, JSON.stringify({sid:k.id,t,tier}));
